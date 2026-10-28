@@ -11,6 +11,7 @@ const io = new Server(httpServer, {
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 // Эндпоинт для проверки работоспособности (чтобы сервер не засыпал)
 app.get('/health', (req, res) => res.status(200).send('OK'));
