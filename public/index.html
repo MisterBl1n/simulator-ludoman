@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#0b0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>Симулятор Лудамании</title>
 <style>
   :root{
@@ -13,8 +14,10 @@
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
   html,body{margin:0; padding:0; height:100%;}
-  body{ background:var(--bg); color:#fff; font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif; overflow-x:hidden; user-select:none; -webkit-user-select:none; }
-  
+  body{
+    background:var(--bg); color:#fff; font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+    overflow-x:hidden; user-select:none; -webkit-user-select:none;
+  }
   .blob{position:fixed; border-radius:50%; filter:blur(90px); opacity:.35; z-index:0; pointer-events:none; animation:float 12s ease-in-out infinite alternate;}
   .b1{width:60vw;height:60vw;background:#7c4dff;top:-20vw;left:-20vw;}
   .b2{width:50vw;height:50vw;background:#ff2d78;bottom:-18vw;right:-15vw;animation-delay:-4s;}
@@ -23,33 +26,70 @@
 
   #app{position:relative; z-index:1; width:100%; min-height:100dvh; display:none; flex-direction:column;}
 
-  header{ position:sticky; top:0; z-index:10; padding:10px 14px calc(10px + env(safe-area-inset-top)); background:linear-gradient(180deg, rgba(11,14,26,.95), rgba(11,14,26,.75)); backdrop-filter:blur(10px); border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:10px;}
+  header{
+    position:sticky; top:0; z-index:10;
+    padding:10px 14px calc(10px + env(safe-area-inset-top));
+    background:linear-gradient(180deg, rgba(11,14,26,.95), rgba(11,14,26,.75));
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
   .head-right{display:flex; align-items:center; gap:8px;}
-  .logo{font-weight:900; font-size:16px; letter-spacing:.5px; line-height:1.1; background:linear-gradient(90deg,var(--pink),var(--gold),var(--cyan)); -webkit-background-clip:text; background-clip:text; color:transparent; cursor:pointer;}
+  .logo{font-weight:900; font-size:16px; letter-spacing:.5px; line-height:1.1;
+    background:linear-gradient(90deg,var(--pink),var(--gold),var(--cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent; cursor:pointer;}
   .logo small{display:block; font-size:9px; letter-spacing:2px; color:#9aa; -webkit-text-fill-color:#9aa;}
   
   .balance-wrap{display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.05); padding:4px 6px 4px 12px; border-radius:20px; border:1px solid var(--line);}
   .balance{font-weight:800; font-size:16px; color:var(--gold); transition:transform .2s;}
   .balance.pop{transform:scale(1.15);}
-  .topup-btn{ width:24px; height:24px; border-radius:50%; border:none; background:linear-gradient(135deg,#00c853,#00e576); color:#fff; font-size:18px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1; padding-bottom:2px; box-shadow:0 2px 10px rgba(0,230,118,.4);}
+  .topup-btn{
+    width:24px; height:24px; border-radius:50%; border:none;
+    background:linear-gradient(135deg,#00c853,#00e576); color:#fff;
+    font-size:18px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    line-height:1; padding-bottom:2px; box-shadow:0 2px 10px rgba(0,230,118,.4);
+  }
 
   main{flex:1; padding:14px 14px calc(90px + env(safe-area-inset-bottom));}
   .game{display:none; animation:slide .25s ease;}
   .game.on{display:block;}
   @keyframes slide{from{opacity:0; transform:translateX(14px)}to{opacity:1; transform:none}}
 
-  .live-badge{ display:inline-flex; align-items:center; gap:6px; background:rgba(0,230,118,.12); border:1px solid rgba(0,230,118,.3); color:#fff; font-size:11px; font-weight:800; padding:4px 10px; border-radius:12px;}
+  .live-badge{
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(0,230,118,.12); border:1px solid rgba(0,230,118,.3);
+    color:#fff; font-size:11px; font-weight:800;
+    padding:4px 10px; border-radius:12px;
+  }
+  .live-badge span{ color: #fff; }
   .live-dot{width:6px; height:6px; background:var(--green); border-radius:50%; box-shadow:0 0 8px var(--green); animation:pulse 1.5s infinite;}
   @keyframes pulse{0%,100%{opacity:1; transform:scale(1)}50%{opacity:.4; transform:scale(.7)}}
 
   .menu-title{text-align:center; font-size:24px; font-weight:900; margin-bottom:16px; letter-spacing:1px; color:#fff;}
   .menu-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
-  .menu-card{ position:relative; aspect-ratio: 1/1.1; border-radius:20px; border:1px solid rgba(255,255,255,.1); background:linear-gradient(160deg, var(--c1), var(--c2)); display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start; padding:16px; cursor:pointer; transition:transform .1s; overflow:hidden; box-shadow:0 8px 24px -8px var(--c2);}
+  .menu-card{
+    position:relative; aspect-ratio: 1/1.1; border-radius:20px; border:1px solid rgba(255,255,255,.1);
+    background:linear-gradient(160deg, var(--c1), var(--c2));
+    display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start;
+    padding:16px; cursor:pointer; transition:transform .1s; overflow:hidden;
+    box-shadow:0 8px 24px -8px var(--c2);
+  }
   .menu-card:active{transform:scale(.95);}
-  .menu-card::before{ content:''; position:absolute; inset:0; background:radial-gradient(circle at top right, rgba(255,255,255,.3), transparent 60%); z-index:0;}
+  .menu-card::before{
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(circle at top right, rgba(255,255,255,.3), transparent 60%);
+    z-index:0;
+  }
   .menu-card .title{font-size:20px; font-weight:900; z-index:2; text-shadow:0 2px 10px rgba(0,0,0,.6); margin-top:8px; color: #fff;}
   .menu-card .icon{font-size:56px; position:absolute; top:15px; right:15px; z-index:1; filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));}
-  .menu-live{ position:absolute; top:12px; left:12px; z-index:3; background:rgba(0,0,0,.5); backdrop-filter:blur(4px); padding:5px 10px; border-radius:12px; display:flex; align-items:center; gap:6px; font-size:11px; font-weight:800; border:1px solid rgba(255,255,255,.1); color: #fff;}
+  
+  .menu-live{
+    position:absolute; top:12px; left:12px; z-index:3;
+    background:rgba(0,0,0,.5); backdrop-filter:blur(4px);
+    padding:5px 10px; border-radius:12px; display:flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:800; border:1px solid rgba(255,255,255,.1);
+    color: #fff;
+  }
+  .menu-live span{ color: #fff; }
   .menu-live .dot{width:6px; height:6px; background:var(--green); border-radius:50%; box-shadow:0 0 6px var(--green);}
 
   .panel{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; margin-bottom:12px; box-shadow:0 8px 30px rgba(0,0,0,.35);}
@@ -66,36 +106,75 @@
   .bigbtn.gold{background:linear-gradient(90deg,#ff9800,var(--gold)); box-shadow:0 6px 20px rgba(255,201,60,.35); color:#2a1a00;}
   .bigbtn.blue{background:linear-gradient(90deg,#536DFE,#7C4DFF); box-shadow:0 6px 20px rgba(83,109,254,.4); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:10px;}
   .bigbtn.blue span{font-size:14px; opacity:.8; font-weight:600;}
-  .bigbtn.gray{ background: rgba(255,255,255,.08) !important; box-shadow: none !important; color: #888 !important; border: 1px solid rgba(255,255,255,.05); cursor: default; }
+  
+  /* СЕРАЯ КНОПКА (неактивная) */
+  .bigbtn.gray{
+    background: rgba(255,255,255,.08) !important;
+    box-shadow: none !important;
+    color: #888 !important;
+    border: 1px solid rgba(255,255,255,.05);
+    cursor: default;
+  }
   .bigbtn.gray span { color: #666 !important; }
+  .bigbtn.gray:active { transform: none; }
 
-  .sky{position:relative; height:min(40vh,280px); border-radius:18px; overflow:hidden; margin-bottom:10px; background:radial-gradient(120% 100% at 50% 100%, #1a1040 0%, #0b0e1a 70%); border:1px solid var(--line);}
-  .stars{position:absolute; inset:0; pointer-events:none; background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff8,transparent), radial-gradient(1.5px 1.5px at 70% 60%,#fff6,transparent), radial-gradient(1px 1px at 40% 80%,#fff5,transparent), radial-gradient(1px 1px at 85% 20%,#fff7,transparent), radial-gradient(1.2px 1.2px at 10% 70%,#fff5,transparent); animation:starsMove 2.5s linear infinite;}
+  .sky{position:relative; height:min(40vh,280px); border-radius:18px; overflow:hidden; margin-bottom:10px;
+    background:radial-gradient(120% 100% at 50% 100%, #1a1040 0%, #0b0e1a 70%); border:1px solid var(--line);}
+  .stars{position:absolute; inset:0; pointer-events:none;
+    background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff8,transparent),
+    radial-gradient(1.5px 1.5px at 70% 60%,#fff6,transparent),
+    radial-gradient(1px 1px at 40% 80%,#fff5,transparent),
+    radial-gradient(1px 1px at 85% 20%,#fff7,transparent),
+    radial-gradient(1.2px 1.2px at 10% 70%,#fff5,transparent);
+    animation:starsMove 2.5s linear infinite;}
   @keyframes starsMove{from{background-position:0 0,0 0,0 0,0 0,0 0}to{background-position:-40px 0,-60px 0,-30px 0,-80px 0,-50px 0}}
   #rocketCanvas{position:absolute; inset:0; width:100%; height:100%; display:block;}
-  .mult{position:absolute; left:0; right:0; top:24px; text-align:center; font-size:48px; font-weight:900; font-variant-numeric:tabular-nums; text-shadow:0 0 24px rgba(0,229,255,.7); transition:color .2s; pointer-events:none;}
+  .mult{position:absolute; left:0; right:0; top:24px; text-align:center; font-size:48px; font-weight:900;
+    font-variant-numeric:tabular-nums; text-shadow:0 0 24px rgba(0,229,255,.7); transition:color .2s; pointer-events:none;}
   .mult.cash{color:var(--green);} .mult.dead{color:var(--red);}
   .sub{position:absolute; left:0; right:0; top:80px; text-align:center; color:#9ab; font-size:12px; pointer-events:none;}
-  
+  .resultline{position:absolute; left:0; right:0; bottom:10px; text-align:center; font-weight:800; font-size:14px; pointer-events:none; z-index:5;}
+  .resultline.win{color:var(--green);} .resultline.lose{color:var(--red);}
+
   .round-bar{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;}
-  .bet-timer{display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:999px; background:rgba(255,255,255,.06); border:1px solid var(--line); font-size:10.5px; font-weight:900; letter-spacing:1.2px; color:#9ab;}
+  .bet-timer{display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:999px;
+    background:rgba(255,255,255,.06); border:1px solid var(--line);
+    font-size:10.5px; font-weight:900; letter-spacing:1.2px; color:#9ab;}
   .bet-timer b{color:var(--gold); font-size:14px; letter-spacing:0;}
   .bet-timer.fly{border-color:rgba(0,230,118,.4); color:var(--green); background:rgba(0,230,118,.1);}
-  
+  .round-num{padding:6px 12px; border-radius:999px; background:rgba(124,77,255,.18);
+    border:1px solid rgba(124,77,255,.35); font-size:11px; font-weight:900; color:#c9a0ff;}
+
   .players-header{font-size:13px; color:#9ab; font-weight:700; margin:15px 0 10px; padding:0 4px;}
+  .players-header b{color:#fff; font-size:14px;}
   .players-list{display:flex; flex-direction:column; gap:8px;}
-  .player-row{display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:16px; padding:8px 14px; transition: background .3s, border-color .3s;}
+  .player-row{
+    display:flex; align-items:center; gap:12px;
+    background:rgba(255,255,255,.05); border:1px solid var(--line);
+    border-radius:16px; padding:8px 14px;
+    transition: background .3s, border-color .3s;
+  }
   .player-row.cashed{background:rgba(0,230,118,.1); border-color:rgba(0,230,118,.3);}
-  .p-avatar{width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:18px; color:#fff; flex-shrink:0;}
+  .player-row.crashed{opacity:.6; background:rgba(0,0,0,.2);}
+  .p-avatar{
+    width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-size:18px; color:#fff; flex-shrink:0;
+  }
   .p-info{flex:1; display:flex; flex-direction:column; gap:2px; overflow:hidden;}
   .p-name{font-size:15px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
   .p-bet{font-size:12px; color:#9ab; font-weight:600;}
   .p-result{display:flex; align-items:center; gap:12px; flex-shrink:0; text-align:right;}
   .p-mult{font-size:14px; font-weight:800; color:#9ab;}
   .p-win{font-size:15px; font-weight:900; color:#fff;}
+  .player-row.cashed .p-mult{color:var(--green);}
+  .player-row.cashed .p-win{color:var(--green);}
+  .player-row.crashed .p-mult{color:var(--red); font-size:13px;}
+  .player-row.crashed .p-win{color:var(--red); font-size:13px;}
 
   .grid{display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin-top:12px;}
-  .cell{aspect-ratio:1; border-radius:12px; border:1px solid var(--line); background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03)); font-size:22px; display:flex; align-items:center; justify-content:center; transition:transform .12s, background .2s;}
+  .cell{aspect-ratio:1; border-radius:12px; border:1px solid var(--line);
+    background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+    font-size:22px; display:flex; align-items:center; justify-content:center; transition:transform .12s, background .2s;}
   .cell:active{transform:scale(.9);}
   .cell.gem{background:linear-gradient(160deg,#00c853,#00e57655); box-shadow:0 0 14px rgba(0,230,118,.4);}
   .cell.bomb{background:linear-gradient(160deg,#d32f2f,#ff525255); box-shadow:0 0 14px rgba(255,82,82,.4);}
@@ -112,26 +191,43 @@
   .upg-fields{display:flex; align-items:flex-start; gap:8px; margin-bottom:4px;}
   .upg-field{flex:1; min-width:0;}
   .upg-field label{display:block; font-size:10px; font-weight:900; letter-spacing:1.3px; color:#9ab; margin-bottom:6px;}
-  .upg-input{display:flex; align-items:center; gap:6px; background:rgba(0,0,0,.35); border:1px solid var(--line); border-radius:12px; padding:11px 12px;}
+  .upg-input{display:flex; align-items:center; gap:6px; background:rgba(0,0,0,.35);
+    border:1px solid var(--line); border-radius:12px; padding:11px 12px;}
   .upg-input span{font-size:13px; font-weight:900; color:var(--gold);}
   .upg-input input{width:100%; min-width:0; background:none; border:none; outline:none; color:#fff; font-size:15px; font-weight:800; padding:0;}
   .upg-arrow{color:#4d3d6b; font-size:17px; font-weight:900; padding-top:30px;}
   .qrow{display:flex; gap:5px; margin-top:6px;}
-  .qrow button{flex:1; padding:8px 0; border-radius:9px; background:rgba(255,255,255,.08); border:1px solid var(--line); color:#cde; font-size:12px; font-weight:800; cursor:pointer; transition:transform .08s, background .15s;}
+  .qrow button{flex:1; padding:8px 0; border-radius:9px;
+    background:rgba(255,255,255,.08); border:1px solid var(--line);
+    color:#cde; font-size:12px; font-weight:800; cursor:pointer;
+    transition:transform .08s, background .15s;}
   .qrow button:active{transform:scale(.94); background:rgba(255,255,255,.18);}
 
   .upg-circle-wrap{display:flex; justify-content:center; padding:16px 0 6px;}
-  .upg-circle{position:relative; width:min(62vw,238px); aspect-ratio:1; border-radius:50%; background:conic-gradient(var(--green) 0deg,#16924f 175deg,#2a1a3e 175deg,#221334 360deg); box-shadow:0 0 44px -14px rgba(0,230,118,.7),inset 0 0 0 1px rgba(255,255,255,.07); transition:box-shadow .35s;}
+  .upg-circle{position:relative; width:min(62vw,238px); aspect-ratio:1; border-radius:50%;
+    background:conic-gradient(var(--green) 0deg,#16924f 175deg,#2a1a3e 175deg,#221334 360deg);
+    box-shadow:0 0 44px -14px rgba(0,230,118,.7),inset 0 0 0 1px rgba(255,255,255,.07);
+    transition:box-shadow .35s;}
   .upg-circle.win{box-shadow:0 0 66px -6px rgba(0,230,118,.95),inset 0 0 0 1px rgba(0,230,118,.5);}
   .upg-circle.lose{box-shadow:0 0 66px -6px rgba(255,82,82,.95),inset 0 0 0 1px rgba(255,82,82,.5);}
-  .upg-needle{position:absolute; left:50%; bottom:50%; width:4px; height:calc(50% - 16px); border-radius:3px; background:linear-gradient(to top,rgba(255,255,255,.15),#fff 50%,var(--pink)); transform-origin:50% 100%; transform:translateX(-50%) rotate(0deg); filter:drop-shadow(0 0 10px rgba(255,45,120,.95)); z-index:1;}
-  .upg-needle::after{content:''; position:absolute; top:-14px; left:50%; transform:translateX(-50%); width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent; border-bottom:16px solid var(--pink); filter:drop-shadow(0 0 8px rgba(255,45,120,.9));}
-  .upg-center{position:absolute; inset:23%; border-radius:50%; background:var(--bg); z-index:2; display:flex; flex-direction:column; align-items:center; justify-content:center; border:1px solid var(--line); box-shadow:0 0 26px rgba(0,0,0,.7) inset;}
+  .upg-needle{position:absolute; left:50%; bottom:50%; width:4px; height:calc(50% - 16px); border-radius:3px;
+    background:linear-gradient(to top,rgba(255,255,255,.15),#fff 50%,var(--pink));
+    transform-origin:50% 100%; transform:translateX(-50%) rotate(0deg);
+    filter:drop-shadow(0 0 10px rgba(255,45,120,.95)); z-index:1;}
+  .upg-needle::after{content:''; position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent;
+    border-bottom:16px solid var(--pink); filter:drop-shadow(0 0 8px rgba(255,45,120,.9));}
+  .upg-center{position:absolute; inset:23%; border-radius:50%; background:var(--bg); z-index:2;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border:1px solid var(--line); box-shadow:0 0 26px rgba(0,0,0,.7) inset;}
   .upg-pct{font-size:min(8.6vw,32px); font-weight:900; letter-spacing:-1px; line-height:1; color:#fff;}
   .upg-lbl{font-size:9px; font-weight:900; letter-spacing:2.4px; color:#9ab; margin-top:5px;}
   .upg-mult{font-size:11px; font-weight:900; color:var(--gold); margin-top:4px;}
 
-  .plinko-wrap{position:relative; height:min(56vh,460px); min-height:280px; border-radius:18px; overflow:hidden; background:radial-gradient(circle at 50% 0%,rgba(0,230,118,.16),transparent 66%),#0a0e1a; border:1px solid var(--line); margin-bottom:10px;}
+  .plinko-wrap{position:relative; height:min(56vh,460px); min-height:280px;
+    border-radius:18px; overflow:hidden;
+    background:radial-gradient(circle at 50% 0%,rgba(0,230,118,.16),transparent 66%),#0a0e1a;
+    border:1px solid var(--line); margin-bottom:10px;}
   #plinkoCv{width:100%; height:100%; display:block;}
 
   .wheelbox{position:relative; width:min(78vw,300px); height:min(78vw,300px); margin:6px auto 12px;}
@@ -141,23 +237,45 @@
 
   .dice-num{text-align:center; font-size:56px; font-weight:900; font-variant-numeric:tabular-nums; min-height:70px; text-shadow:0 0 20px rgba(0,229,255,.6); transition:.12s;}
 
-  nav{position:fixed; bottom:0; left:0; right:0; width:100%; z-index:20; display:flex; background:rgba(16,19,34,.96); backdrop-filter:blur(12px); border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
-  nav button{flex:1; background:none; border:0; color:#8a93a8; font-size:9px; font-weight:700; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0; border-radius:12px;}
+  nav{position:fixed; bottom:0; left:0; right:0; width:100%; z-index:20;
+    display:flex; background:rgba(16,19,34,.96); backdrop-filter:blur(12px);
+    border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
+  nav button{flex:1; background:none; border:0; color:#8a93a8; font-size:9px; font-weight:700;
+    display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0; border-radius:12px;}
   nav button span.ic{font-size:20px; filter:grayscale(1); transition:filter .2s, transform .2s;}
   nav button.on{color:#fff;}
   nav button.on span.ic{filter:none; transform:translateY(-2px) scale(1.15);}
 
-  #toast{position:fixed; left:50%; bottom:110px; transform:translateX(-50%) translateY(20px); background:rgba(20,24,44,.95); border:1px solid var(--line); color:#fff; font-weight:800; padding:12px 20px; border-radius:14px; z-index:100; opacity:0; pointer-events:none; transition:.25s; max-width:86vw; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.5);}
+  #toast{position:fixed; left:50%; bottom:110px; transform:translateX(-50%) translateY(20px);
+    background:rgba(20,24,44,.95); border:1px solid var(--line); color:#fff; font-weight:800;
+    padding:12px 20px; border-radius:14px; z-index:100; opacity:0; pointer-events:none; transition:.25s;
+    max-width:86vw; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.5);}
   #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
-  #toast.good{border-color:var(--green); box-shadow:0 0 24px rgba(0,230,118,.4);} #toast.bad{border-color:var(--red);} #toast.gold{border-color:var(--gold); box-shadow:0 0 24px rgba(255,201,60,.45);}
+  #toast.good{border-color:var(--green); box-shadow:0 0 24px rgba(0,230,118,.4);}
+  #toast.bad{border-color:var(--red);}
+  #toast.gold{border-color:var(--gold); box-shadow:0 0 24px rgba(255,201,60,.45);}
 
-  /* ЭКРАН ВХОДА */
-  #loginScreen { position: fixed; inset: 0; z-index: 100; background: rgba(11, 14, 26, 0.95); backdrop-filter: blur(20px); display: flex; align-items: center; justify-content: center; padding: 20px; }
-  .login-box { background: var(--card); border: 1px solid var(--line); padding: 30px 20px; border-radius: 24px; width: 100%; max-width: 340px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); text-align: center; }
-  .login-tabs { display: flex; margin-bottom: 20px; background: rgba(0,0,0,0.3); border-radius: 12px; padding: 4px; }
-  .login-tabs button { flex: 1; background: none; border: none; color: #9ab; padding: 10px; font-weight: 800; cursor: pointer; border-radius: 8px; transition: 0.3s; }
-  .login-tabs button.active { background: var(--purple); color: #fff; }
-  .login-box input { width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--line); background: rgba(0,0,0,0.4); color: #fff; font-size: 16px; font-weight: 700; margin-bottom: 12px; outline: none; text-align: center; }
+  .disclaim{text-align:center; font-size:10px; color:#667; padding:4px 0 10px;}
+
+  /* СТИЛИ ДЛЯ ЭКРАНА ВХОДА */
+  #loginScreen {
+    position: fixed; inset: 0; z-index: 100;
+    background: rgba(11, 14, 26, 0.95); backdrop-filter: blur(20px);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 20px; text-align: center;
+  }
+  .login-box {
+    background: var(--card); border: 1px solid var(--line); padding: 30px 20px;
+    border-radius: 24px; width: 100%; max-width: 340px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+  }
+  .login-box h1 { font-size: 24px; margin: 0 0 10px; background: linear-gradient(90deg,var(--pink),var(--gold)); -webkit-background-clip: text; color: transparent; }
+  .login-box p { color: #9ab; font-size: 13px; margin-bottom: 20px; }
+  .login-box input {
+    width: 100%; padding: 15px; border-radius: 12px; border: 1px solid var(--line);
+    background: rgba(0,0,0,0.4); color: #fff; font-size: 16px; font-weight: 700;
+    margin-bottom: 15px; outline: none; text-align: center;
+  }
 
   /* МОДАЛКА АДМИНА */
   #adminModal { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -171,17 +289,16 @@
 <body>
 <div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
 
-<!-- ЭКРАН ВХОДА -->
+<!-- ЭКРАН ВХОДА / РЕГИСТРАЦИИ -->
 <div id="loginScreen">
   <div class="login-box">
-    <div style="font-size: 40px; margin-bottom: 10px;">🎰</div>
-    <div class="login-tabs">
-      <button id="tabLogin" class="active" onclick="switchAuthTab('login')">ВХОД</button>
-      <button id="tabReg" onclick="switchAuthTab('reg')">РЕГИСТРАЦИЯ</button>
-    </div>
-    <input type="text" id="authUser" placeholder="Логин (ник)" maxlength="15">
-    <input type="password" id="authPass" placeholder="Пароль">
+    <div style="font-size: 50px; margin-bottom: 10px;">🎰</div>
+    <h1>ВХОД В ИГРУ</h1>
+    <p>Введи свой ник, чтобы начать играть</p>
+    <input type="text" id="authUser" placeholder="Твой никнейм" maxlength="15">
+    <input type="password" id="authPass" placeholder="Пароль" style="display:none;"> <!-- Пароль скрыт, если не нужен, но сервер требует -->
     <button class="bigbtn blue" id="authBtn" onclick="submitAuth()">ВОЙТИ</button>
+    <div style="margin-top:10px; font-size:12px; color:#9ab;">Для админа: логин <b>Admin</b>, пароль <b>admin123</b></div>
   </div>
 </div>
 
@@ -190,7 +307,9 @@
   <div class="admin-box">
     <h3 style="margin-top:0; text-align:center; color:var(--gold);">👑 АДМИН-ПАНЕЛЬ</h3>
     <p style="font-size:12px; color:#9ab; text-align:center; margin-bottom:10px;">Нажми на игрока, чтобы выбрать</p>
+    
     <div class="admin-list" id="adminUsersList">Загрузка...</div>
+    
     <input type="text" id="adminTarget" placeholder="Ник игрока" style="width:100%; padding:10px; margin-bottom:8px; border-radius:8px; border:1px solid var(--line); background:#2a2e3e; color:#fff;">
     <div class="admin-inputs">
       <input type="number" id="adminAmount" value="1000" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--line); background:#2a2e3e; color:#fff;">
@@ -217,12 +336,36 @@
     <section class="game on" id="g-menu">
       <div class="menu-title">ВЫБЕРИ ИГРУ</div>
       <div class="menu-grid">
-        <button class="menu-card" style="--c1:#7c1a47; --c2:#ff2d78;" onclick="tab('rocket', document.querySelector('nav button[data-g=\'rocket\']'))"><div class="menu-live"><div class="dot"></div><span id="m-online-rocket">…</span></div><div class="icon">🚀</div><div class="title">Ракетка</div></button>
-        <button class="menu-card" style="--c1:#1a0b2e; --c2:#ff6b00;" onclick="tab('mines', document.querySelector('nav button[data-g=\'mines\']'))"><div class="menu-live"><div class="dot"></div><span id="m-online-mines">…</span></div><div class="icon">💣</div><div class="title">Мины</div></button>
-        <button class="menu-card" style="--c1:#8b6900; --c2:#ffc93c;" onclick="tab('up', document.querySelector('nav button[data-g=\'up\']'))"><div class="menu-live"><div class="dot"></div><span id="m-online-up">…</span></div><div class="icon">⚡</div><div class="title">Апгрейд</div></button>
-        <button class="menu-card" style="--c1:#0b4a52; --c2:#00e5ff;" onclick="tab('dice', document.querySelector('nav button[data-g=\'dice\']'))"><div class="menu-live"><div class="dot"></div><span id="m-online-dice">…</span></div><div class="icon">🎲</div><div class="title">Кости</div></button>
-        <button class="menu-card" style="--c1:#5c0b11; --c2:#ff5252;" onclick="tab('wheel', document.querySelector('nav button[data-g=\'wheel\']'))"><div class="menu-live"><div class="dot"></div><span id="m-online-wheel">…</span></div><div class="icon">🎡</div><div class="title">Колесо</div></button>
-        <button class="menu-card" style="--c1:#0a3b1f; --c2:#00e676;" onclick="tab('plinko', document.querySelector('nav button[data-g=\'plinko\']'))"><div class="menu-live"><div class="dot"></div><span id="m-online-plinko">…</span></div><div class="icon">🔻</div><div class="title">Плинко</div></button>
+        <button class="menu-card" style="--c1:#7c1a47; --c2:#ff2d78;" onclick="tab('rocket', document.querySelector('nav button[data-g=\'rocket\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-rocket">…</span></div>
+          <div class="icon">🚀</div>
+          <div class="title">Ракетка</div>
+        </button>
+        <button class="menu-card" style="--c1:#1a0b2e; --c2:#ff6b00;" onclick="tab('mines', document.querySelector('nav button[data-g=\'mines\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-mines">…</span></div>
+          <div class="icon">💣</div>
+          <div class="title">Мины</div>
+        </button>
+        <button class="menu-card" style="--c1:#8b6900; --c2:#ffc93c;" onclick="tab('up', document.querySelector('nav button[data-g=\'up\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-up">…</span></div>
+          <div class="icon">⚡</div>
+          <div class="title">Апгрейд</div>
+        </button>
+        <button class="menu-card" style="--c1:#0b4a52; --c2:#00e5ff;" onclick="tab('dice', document.querySelector('nav button[data-g=\'dice\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-dice">…</span></div>
+          <div class="icon">🎲</div>
+          <div class="title">Кости</div>
+        </button>
+        <button class="menu-card" style="--c1:#5c0b11; --c2:#ff5252;" onclick="tab('wheel', document.querySelector('nav button[data-g=\'wheel\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-wheel">…</span></div>
+          <div class="icon">🎡</div>
+          <div class="title">Колесо</div>
+        </button>
+        <button class="menu-card" style="--c1:#0a3b1f; --c2:#00e676;" onclick="tab('plinko', document.querySelector('nav button[data-g=\'plinko\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-plinko">…</span></div>
+          <div class="icon">🔻</div>
+          <div class="title">Плинко</div>
+        </button>
       </div>
       <p class="disclaim" style="margin-top:30px;">Игра на виртуальные рубли. Настоящих денег здесь нет и не будет.</p>
     </section>
@@ -234,14 +377,18 @@
         <canvas id="rocketCanvas"></canvas>
         <div class="mult" id="cMult">1.00x</div>
         <div class="sub" id="cSub">Ждём ставки…</div>
+        <div class="resultline" id="cRes"></div>
       </div>
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
         <div class="live-badge"><div class="live-dot"></div><span id="online-rocket">0</span> онлайн</div>
       </div>
-      <button class="bigbtn blue" id="rocketBtn" onclick="rocketClick()"><div style="font-size:16px; font-weight:900;">СДЕЛАТЬ СТАВКУ</div></button>
+      <button class="bigbtn blue" id="rocketBtn" onclick="rocketClick()">
+        <div style="font-size:16px; font-weight:900;">СДЕЛАТЬ СТАВКУ</div>
+      </button>
       <div class="panel" style="margin-top:12px;">
         <div class="round-bar">
           <div class="bet-timer" id="rocketTimer">⏱ СТАВКИ · <b>8с</b></div>
+          <div class="round-num" id="rocketRound">#1</div>
         </div>
         <p class="ptitle">Ваша ставка</p>
         <div class="betrow">
@@ -254,12 +401,14 @@
             <button onclick="dbl('rocketBet')">x2</button>
           </div>
         </div>
-        <div class="players-header">Игроков <b id="pCount">0</b> · банк <b id="pBank">0</b> Р</div>
+        <div class="players-header" id="pHeader">
+          Игроков <b id="pCount">0</b> · банк <b id="pBank">0</b> Р
+        </div>
         <div class="players-list" id="playersList"></div>
       </div>
     </section>
 
-    <!-- МИНЫ (ЛОКАЛЬНАЯ ИЗ TEXT.HTML) -->
+    <!-- МИНЫ (ИЗ TEXT.HTML) -->
     <section class="game" id="g-mines">
       <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-mines">0</span> онлайн</div></div>
       <div class="panel">
@@ -288,7 +437,7 @@
       </div>
     </section>
 
-    <!-- АПГРЕЙДЕР (ЛОКАЛЬНЫЙ ИЗ TEXT.HTML) -->
+    <!-- АПГРЕЙДЕР (ИЗ TEXT.HTML) -->
     <section class="game" id="g-up">
       <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-up">0</span> онлайн</div></div>
       <div class="panel">
@@ -296,13 +445,19 @@
           <div class="upg-field">
             <label>СТАВКА</label>
             <div class="upg-input"><span>Р</span><input type="number" id="upBet" value="100" min="1" inputmode="decimal"></div>
-            <div class="qrow"><button onclick="upAdj('upBet',-50)">−50</button><button onclick="upAdj('upBet',50)">+50</button></div>
+            <div class="qrow">
+              <button onclick="upAdj('upBet',-50)">−50</button>
+              <button onclick="upAdj('upBet',50)">+50</button>
+            </div>
           </div>
           <div class="upg-arrow">→</div>
           <div class="upg-field">
             <label>ПОЛУЧИТЬ</label>
             <div class="upg-input"><span>Р</span><input type="number" id="upWin" value="200" min="2" inputmode="decimal"></div>
-            <div class="qrow"><button onclick="upAdj('upWin',-50)">−50</button><button onclick="upAdj('upWin',50)">+50</button></div>
+            <div class="qrow">
+              <button onclick="upAdj('upWin',-50)">−50</button>
+              <button onclick="upAdj('upWin',50)">+50</button>
+            </div>
           </div>
         </div>
         <div class="upg-circle-wrap">
@@ -319,7 +474,7 @@
       </div>
     </section>
 
-    <!-- КОСТИ (ЛОКАЛЬНЫЕ ИЗ TEXT.HTML) -->
+    <!-- КОСТИ (ИЗ TEXT.HTML) -->
     <section class="game" id="g-dice">
       <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-dice">0</span> онлайн</div></div>
       <div class="panel">
@@ -345,7 +500,7 @@
       </div>
     </section>
 
-    <!-- КОЛЕСО (ЛОКАЛЬНОЕ ИЗ TEXT.HTML) -->
+    <!-- КОЛЕСО (ИЗ TEXT.HTML) -->
     <section class="game" id="g-wheel">
       <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-wheel">0</span> онлайн</div></div>
       <div class="panel" style="text-align:center">
@@ -369,7 +524,7 @@
       </div>
     </section>
 
-    <!-- ПЛИНКО (ЛОКАЛЬНЫЙ ИЗ TEXT.HTML) -->
+    <!-- ПЛИНКО (ИЗ TEXT.HTML) -->
     <section class="game" id="g-plinko">
       <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-plinko">0</span> онлайн</div></div>
       <div class="plinko-wrap">
@@ -409,42 +564,50 @@
 <script>
 'use strict';
 
-const socket = io(); // Автоматический выбор транспорта (без принудительного WebSocket, чтобы работало на телефоне)
-const S = { bal: 0, isAdmin: false, authMode: 'login' };
+const socket = io(); // Автоматический выбор транспорта
+const S = { bal: 0, isAdmin: false };
 const fmt = n => n.toLocaleString('ru-RU',{maximumFractionDigits:2});
 
-function switchAuthTab(mode) {
-  S.authMode = mode;
-  document.getElementById('tabLogin').classList.toggle('active', mode === 'login');
-  document.getElementById('tabReg').classList.toggle('active', mode === 'reg');
-  document.getElementById('authBtn').textContent = mode === 'login' ? 'ВОЙТИ' : 'ЗАРЕГИСТРИРОВАТЬСЯ';
+// === БАЗА И СИНХРОНИЗАЦИЯ ===
+function saveBal() {
+  // Отправляем баланс на сервер, чтобы админка видела актуальные цифры
+  socket.emit('sync_balance', S.bal);
 }
-
-function submitAuth() {
-  const u = document.getElementById('authUser').value.trim();
-  const p = document.getElementById('authPass').value;
-  if(!u || !p) return toast('Заполните все поля', 'bad');
-  if(S.authMode === 'login') socket.emit('login', { username: u, password: p });
-  else socket.emit('register', { username: u, password: p });
-}
-
 function setBal(v){
-  S.bal = Math.max(0, Math.round(v*100)/100);
+  S.bal = Math.max(0, Math.round(v*100)/100); 
+  saveBal();
   const el = document.getElementById('balance');
   if(el) {
     el.textContent = fmt(S.bal);
     el.classList.add('pop');
     setTimeout(()=>el.classList.remove('pop'),200);
   }
-  socket.emit('sync_balance', S.bal); // Синхронизация локальных игр с сервером для админки
 }
-
 function toast(msg,type){
   const t=document.getElementById('toast');
   if(!t) return;
   t.textContent=msg; t.className='show '+(type||'');
   clearTimeout(t._t); t._t=setTimeout(()=>t.className='',2400);
 }
+
+// === ВХОД И АДМИНКА ===
+function submitAuth() {
+  const u = document.getElementById('authUser').value.trim();
+  const p = document.getElementById('authPass').value || '1234'; // Если пароль пустой, ставим дефолт
+  if(!u) return toast('Введите ник', 'bad');
+  socket.emit('login', { username: u, password: p });
+}
+
+socket.on('auth_error', (msg) => toast(msg, 'bad'));
+
+socket.on('login_success', (data) => {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  setBal(data.balance);
+  S.isAdmin = data.isAdmin;
+  toast('Привет, ' + data.username + '!', 'good');
+  setTimeout(() => { rocketResize(); plinkoGeometry(); }, 100); 
+});
 
 function addFunds(){ 
   if(S.isAdmin) {
@@ -474,25 +637,20 @@ socket.on('admin_users_list', (list) => {
   });
 });
 
-socket.on('auth_error', (msg) => toast(msg, 'bad'));
+socket.on('balance_update', (bal) => setBal(bal));
+socket.on('toast', (data) => toast(data.msg, data.type));
 
-socket.on('login_success', (data) => {
-  document.getElementById('loginScreen').style.display = 'none';
-  document.getElementById('app').style.display = 'flex';
-  setBal(data.balance);
-  S.isAdmin = data.isAdmin;
-  toast('Привет, ' + data.username + '!', 'good');
-  setTimeout(() => { rocketResize(); plinkoGeometry(); }, 100); 
-});
-
-/* НАВИГАЦИЯ */
+// === НАВИГАЦИЯ ===
 function tab(g,btn){
   document.querySelectorAll('.game').forEach(s=>s.classList.remove('on'));
   document.getElementById('g-'+g).classList.add('on');
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
   if(btn) btn.classList.add('on');
   if(g==='rocket') setTimeout(rocketResize,40);
-  if(g==='plinko'){ requestAnimationFrame(()=>requestAnimationFrame(()=>plinkoGeometry())); setTimeout(plinkoGeometry, 60); }
+  if(g==='plinko'){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>plinkoGeometry()));
+    setTimeout(plinkoGeometry, 60);
+  }
   updateOnlineCounters(); 
 }
 function chip(id,v){ document.getElementById(id).value=v; }
@@ -505,7 +663,7 @@ function readBet(id){
   return Math.round(v*100)/100;
 }
 
-/* ОНЛАЙН */
+/* ОНЛАЙН (ИМИТАЦИЯ) */
 const onlineData = {
   rocket: { base: 124, current: 124, el: 'online-rocket', mel: 'm-online-rocket' },
   mines:  { base: 42, current: 42, el: 'online-mines', mel: 'm-online-mines' },
@@ -521,7 +679,7 @@ function updateOnlineCounters(){
     d.current = Math.max(10, d.base + Math.floor(Math.random() * 20) - 10 + delta);
     let displayVal = d.current;
     if(key === 'rocket' && typeof RK !== 'undefined'){
-       displayVal = d.current + (RK.playersData ? RK.playersData.length : 0) + (RK.myBet > 0 ? 1 : 0);
+       displayVal = d.current + (RK.playersData ? RK.playersData.length : 0);
     }
     const mainEl = document.getElementById(d.el);
     const menuEl = document.getElementById(d.mel);
@@ -569,6 +727,8 @@ function rocketDraw(boom){
     for(let i=1;i<RK.pts.length;i++) ctx.lineTo(px(RK.pts[i].t), py(RK.pts[i].m));
     ctx.strokeStyle = boom?'#ff5252':'#ff2d78'; ctx.lineWidth=3.5; ctx.stroke();
     ctx.font='24px serif'; ctx.textAlign='center'; ctx.fillText(boom?'💥':'🚀', px(RK.pts[RK.pts.length-1].t), py(RK.pts[RK.pts.length-1].m));
+  } else {
+    ctx.globalAlpha=.4; ctx.font='30px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText('🚀', rkW*0.32, rkH*0.72); ctx.globalAlpha=1;
   }
 }
 
@@ -613,8 +773,6 @@ function rocketClick(){
   else if (RK.phase !== 'waiting' && RK.myBet === 0) socket.emit('place_bet', bet);
 }
 
-socket.on('balance_update', (bal) => setBal(bal));
-
 socket.on('game_state', (state) => {
   RK.phase = state.phase; RK.mult = state.multiplier;
   const tEl = document.getElementById('rocketTimer');
@@ -642,11 +800,10 @@ socket.on('game_crash', (data) => {
 
 socket.on('players_update', (data) => { RK.playersData = data.players; renderPlayers(); rocketUpdateUI(); });
 socket.on('cashout_success', (data) => { toast('💰 Забрал ' + fmt(data.win) + ' Р', 'gold'); RK.cashedOut = true; rocketUpdateUI(); });
-socket.on('toast', (data) => toast(data.msg, data.type));
 
 
 /* ==========================================================================
-   ЛОКАЛЬНЫЕ ИГРЫ (ВЗЯТЫ 1 В 1 ИЗ ТВОЕГО TEXT.HTML)
+   ЛОКАЛЬНЫЕ ИГРЫ (СКОПИРОВАНЫ 1 В 1 ИЗ TEXT.HTML)
    ========================================================================== */
 
 /* МИНЫ */
@@ -1045,13 +1202,13 @@ function plinkoDrop(){
 /* ЗАПУСК */
 diceRender();
 upRender();
-rocketResize();
 
 window.addEventListener('resize', ()=>{
   rocketResize();
   plinkoGeometry();
 });
 setTimeout(()=>{ rocketResize(); plinkoGeometry(); }, 120);
+
 updateOnlineCounters();
 setInterval(updateOnlineCounters, 3000);
 </script>
