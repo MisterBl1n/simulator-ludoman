@@ -11,19 +11,22 @@ const io = new Server(httpServer, {
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public')); // Отдаем файлы сайта
+app.use(express.static('public'));
 
 app.get('/health', (req, res) => res.status(200).send('OK'));
 
 // --- БАЗА ДАННЫХ ---
-const users = {}; // { username: { balance, socketId, pendingBet, bet, cashedOut, cashoutMult } }
-const ADMIN_SECRET = 'admin123'; 
+const users = {
+  'Admin': { 
+    password: 'admin123', 
+    balance: 100000, 
+    socketId: null, bet: 0, pendingBet: 0, cashedOut: false, cashoutMult: 0 
+  }
+}; 
 
 // --- ЛОГИКА ИГРЫ ---
-let gameState = {
-  phase: 'waiting', multiplier: 1.00, crashAt: 2.00, timeLeft: 8
-};
-let activeBets = []; // [{ username, bet, cashedOut, cashoutMult }]
+let gameState = { phase: 'waiting', multiplier: 1.00, crashAt: 2.00, timeLeft: 8 };
+let activeBets = [];
 
 function startGameLoop() {
   gameState.phase = 'waiting';
@@ -31,7 +34,6 @@ function startGameLoop() {
   gameState.multiplier = 1.00;
   activeBets = [];
   
-  // Переносим отложенные ставки
   for (const name in users) {
     if (users[name].pendingBet > 0) {
       if (users[name].balance >= users[name].pendingBet) {
@@ -118,20 +120,36 @@ function updatePlayersList() {
 
 // --- СОКЕТЫ ---
 io.on('connection', (socket) => {
-  socket.on('login', (username) => {
-    username = username.trim().substring(0, 15);
-    if (!username) return;
+  // РЕГИСТРАЦИЯ
+  socket.on('register', (data) => {
+    const { username, password } = data;
+    const name = username.trim().substring(0, 15);
+    
+    if (name.toLowerCase() === 'admin') return socket.emit('auth_error', 'Этот ник зарезервирован!');
+    if (users[name]) return socket.emit('auth_error', 'Этот ник уже занят!');
+    if (name.length < 2 || password.length < 4) return socket.emit('auth_error', 'Ник > 1 буквы, пароль > 3 символов');
 
-    if (!users[username]) {
-      users[username] = { balance: 1000, bet: 0, pendingBet: 0, cashedOut: false, cashoutMult: 0 };
-    }
-    users[username].socketId = socket.id;
-    socket.username = username;
-
-    socket.emit('login_success', { username, balance: users[username].balance, state: gameState });
+    users[name] = { password, balance: 1000, socketId: socket.id, bet: 0, pendingBet: 0, cashedOut: false, cashoutMult: 0 };
+    socket.username = name;
+    socket.emit('login_success', { username: name, balance: users[name].balance, isAdmin: false });
     updatePlayersList();
   });
 
+  // ВХОД
+  socket.on('login', (data) => {
+    const { username, password } = data;
+    const name = username.trim();
+    
+    const user = users[name];
+    if (!user || user.password !== password) return socket.emit('auth_error', 'Неверный логин или пароль');
+
+    user.socketId = socket.id;
+    socket.username = name;
+    socket.emit('login_success', { username: name, balance: user.balance, isAdmin: name === 'Admin' });
+    updatePlayersList();
+  });
+
+  // СТАВКИ
   socket.on('place_bet', (amount) => {
     const name = socket.username;
     if (!name || !users[name]) return;
@@ -171,40 +189,35 @@ io.on('connection', (socket) => {
     }
   });
 
+  // АДМИНКА (Внутри игры)
+  socket.on('admin_get_users', () => {
+    if (socket.username !== 'Admin') return;
+    const list = Object.keys(users).map(name => ({ name, balance: users[name].balance }));
+    socket.emit('admin_users_list', list);
+  });
+
+  socket.on('admin_change_balance', (data) => {
+    if (socket.username !== 'Admin') return;
+    const { targetName, amount, action } = data;
+    if (!users[targetName]) return socket.emit('toast', { msg: 'Игрок не найден', type: 'bad' });
+
+    if (action === 'add') users[targetName].balance += parseFloat(amount);
+    if (action === 'set') users[targetName].balance = parseFloat(amount);
+
+    if (users[targetName].socketId) {
+      io.to(users[targetName].socketId).emit('balance_update', users[targetName].balance);
+      io.to(users[targetName].socketId).emit('toast', { msg: 'Админ изменил ваш баланс!', type: 'gold' });
+    }
+    socket.emit('toast', { msg: 'Баланс ' + targetName + ' обновлен!', type: 'good' });
+    socket.emit('admin_users_list', Object.keys(users).map(name => ({ name, balance: users[name].balance })));
+  });
+
   socket.on('disconnect', () => {
     if (socket.username && users[socket.username]) {
       users[socket.username].socketId = null;
     }
     updatePlayersList();
   });
-});
-
-// --- АДМИН API ---
-app.post('/api/admin/balance', (req, res) => {
-  const { secret, playerName, amount, action } = req.body;
-  if (secret !== ADMIN_SECRET) return res.status(403).json({ error: 'Неверный пароль' });
-
-  if (!users[playerName]) return res.status(404).json({ error: 'Игрок не найден' });
-
-  if (action === 'add') users[playerName].balance += parseFloat(amount);
-  if (action === 'set') users[playerName].balance = parseFloat(amount);
-
-  if (users[playerName].socketId) {
-    io.to(users[playerName].socketId).emit('balance_update', users[playerName].balance);
-    io.to(users[playerName].socketId).emit('toast', { msg: 'Администратор изменил ваш баланс!', type: 'gold' });
-  }
-  
-  res.json({ success: true, newBalance: users[playerName].balance });
-});
-
-app.get('/api/admin/players', (req, res) => {
-  if (req.query.secret !== ADMIN_SECRET) return res.status(403).json({ error: 'Неверный пароль' });
-  const list = Object.keys(users).map(name => ({ 
-    name: name, 
-    balance: users[name].balance,
-    online: !!users[name].socketId
-  }));
-  res.json(list);
 });
 
 const PORT = process.env.PORT || 3000;
