@@ -1,0 +1,1277 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0e1a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Симулятор Лудамании</title>
+<style>
+  :root{
+    --pink:#ff2d78; --purple:#7c4dff; --cyan:#00e5ff; --gold:#ffc93c;
+    --bg:#0b0e1a; --card:rgba(255,255,255,.06); --line:rgba(255,255,255,.12);
+    --green:#00e676; --red:#ff5252;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0; padding:0; height:100%;}
+  body{
+    background:var(--bg); color:#fff; font-family:-apple-system,'Segoe UI',Roboto,Arial,sans-serif;
+    overflow-x:hidden; user-select:none; -webkit-user-select:none;
+  }
+  .blob{position:fixed; border-radius:50%; filter:blur(90px); opacity:.35; z-index:0; pointer-events:none; animation:float 12s ease-in-out infinite alternate;}
+  .b1{width:60vw;height:60vw;background:#7c4dff;top:-20vw;left:-20vw;}
+  .b2{width:50vw;height:50vw;background:#ff2d78;bottom:-18vw;right:-15vw;animation-delay:-4s;}
+  .b3{width:40vw;height:40vw;background:#00e5ff;top:40%;left:55%;opacity:.18;animation-delay:-8s;}
+  @keyframes float{from{transform:translate(0,0) scale(1)}to{transform:translate(6vw,-4vw) scale(1.15)}}
+
+  #app{position:relative; z-index:1; width:100%; min-height:100dvh; display:flex; flex-direction:column;}
+
+  header{
+    position:sticky; top:0; z-index:10;
+    padding:10px 14px calc(10px + env(safe-area-inset-top));
+    background:linear-gradient(180deg, rgba(11,14,26,.95), rgba(11,14,26,.75));
+    backdrop-filter:blur(10px); border-bottom:1px solid var(--line);
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+  }
+  .head-right{display:flex; align-items:center; gap:8px;}
+  .logo{font-weight:900; font-size:16px; letter-spacing:.5px; line-height:1.1;
+    background:linear-gradient(90deg,var(--pink),var(--gold),var(--cyan));
+    -webkit-background-clip:text; background-clip:text; color:transparent; cursor:pointer;}
+  .logo small{display:block; font-size:9px; letter-spacing:2px; color:#9aa; -webkit-text-fill-color:#9aa;}
+  
+  .balance-wrap{display:flex; align-items:center; gap:6px; background:rgba(255,255,255,.05); padding:4px 6px 4px 12px; border-radius:20px; border:1px solid var(--line);}
+  .balance{font-weight:800; font-size:16px; color:var(--gold); transition:transform .2s;}
+  .balance.pop{transform:scale(1.15);}
+  .topup-btn{
+    width:24px; height:24px; border-radius:50%; border:none;
+    background:linear-gradient(135deg,#00c853,#00e576); color:#fff;
+    font-size:18px; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center;
+    line-height:1; padding-bottom:2px; box-shadow:0 2px 10px rgba(0,230,118,.4);
+  }
+
+  main{flex:1; padding:14px 14px calc(90px + env(safe-area-inset-bottom));}
+  .game{display:none; animation:slide .25s ease;}
+  .game.on{display:block;}
+  @keyframes slide{from{opacity:0; transform:translateX(14px)}to{opacity:1; transform:none}}
+
+  .live-badge{
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(0,230,118,.12); border:1px solid rgba(0,230,118,.3);
+    color:#fff; font-size:11px; font-weight:800;
+    padding:4px 10px; border-radius:12px;
+  }
+  .live-badge span{ color: #fff; }
+  .live-dot{width:6px; height:6px; background:var(--green); border-radius:50%; box-shadow:0 0 8px var(--green); animation:pulse 1.5s infinite;}
+  @keyframes pulse{0%,100%{opacity:1; transform:scale(1)}50%{opacity:.4; transform:scale(.7)}}
+
+  .menu-title{text-align:center; font-size:24px; font-weight:900; margin-bottom:16px; letter-spacing:1px; color:#fff;}
+  .menu-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px;}
+  .menu-card{
+    position:relative; aspect-ratio: 1/1.1; border-radius:20px; border:1px solid rgba(255,255,255,.1);
+    background:linear-gradient(160deg, var(--c1), var(--c2));
+    display:flex; flex-direction:column; justify-content:flex-end; align-items:flex-start;
+    padding:16px; cursor:pointer; transition:transform .1s; overflow:hidden;
+    box-shadow:0 8px 24px -8px var(--c2);
+  }
+  .menu-card:active{transform:scale(.95);}
+  .menu-card::before{
+    content:''; position:absolute; inset:0;
+    background:radial-gradient(circle at top right, rgba(255,255,255,.3), transparent 60%);
+    z-index:0;
+  }
+  .menu-card .title{font-size:20px; font-weight:900; z-index:2; text-shadow:0 2px 10px rgba(0,0,0,.6); margin-top:8px; color: #fff;}
+  .menu-card .icon{font-size:56px; position:absolute; top:15px; right:15px; z-index:1; filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));}
+  
+  .menu-live{
+    position:absolute; top:12px; left:12px; z-index:3;
+    background:rgba(0,0,0,.5); backdrop-filter:blur(4px);
+    padding:5px 10px; border-radius:12px; display:flex; align-items:center; gap:6px;
+    font-size:11px; font-weight:800; border:1px solid rgba(255,255,255,.1);
+    color: #fff;
+  }
+  .menu-live span{ color: #fff; }
+  .menu-live .dot{width:6px; height:6px; background:var(--green); border-radius:50%; box-shadow:0 0 6px var(--green);}
+
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:18px; padding:14px; margin-bottom:12px; box-shadow:0 8px 30px rgba(0,0,0,.35);}
+  .ptitle{font-size:12px; letter-spacing:1.5px; color:#9ab; text-transform:uppercase; margin:0 0 10px; font-weight:700;}
+
+  .betrow{display:flex; gap:8px; margin-bottom:10px;}
+  .betrow input{flex:1; min-width:0; background:rgba(0,0,0,.35); border:1px solid var(--line); color:#fff; border-radius:12px; padding:12px; font-size:16px; font-weight:700; outline:none;}
+  .chips{display:flex; gap:6px;}
+  .chips button{background:rgba(255,255,255,.08); border:1px solid var(--line); color:#cde; font-size:12px; border-radius:10px; padding:0 10px; font-weight:700;}
+  .bigbtn{width:100%; border:0; border-radius:14px; padding:15px; font-size:16px; font-weight:900; color:#fff; letter-spacing:.5px; cursor:pointer; transition:transform .08s, filter .2s; background:linear-gradient(90deg,var(--pink),var(--purple)); box-shadow:0 6px 20px rgba(255,45,120,.35);}
+  .bigbtn:active{transform:scale(.96);}
+  .bigbtn:disabled{filter:grayscale(.8) brightness(.6);}
+  .bigbtn.green{background:linear-gradient(90deg,#00c853,#00e576); box-shadow:0 6px 20px rgba(0,200,83,.35);}
+  .bigbtn.gold{background:linear-gradient(90deg,#ff9800,var(--gold)); box-shadow:0 6px 20px rgba(255,201,60,.35); color:#2a1a00;}
+  .bigbtn.blue{background:linear-gradient(90deg,#536DFE,#7C4DFF); box-shadow:0 6px 20px rgba(83,109,254,.4); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:10px;}
+  .bigbtn.blue span{font-size:14px; opacity:.8; font-weight:600;}
+  
+  .bigbtn.gray{
+    background: rgba(255,255,255,.08) !important;
+    box-shadow: none !important;
+    color: #888 !important;
+    border: 1px solid rgba(255,255,255,.05);
+    cursor: default;
+  }
+  .bigbtn.gray span { color: #666 !important; }
+  .bigbtn.gray:active { transform: none; }
+
+  .sky{position:relative; height:min(40vh,280px); border-radius:18px; overflow:hidden; margin-bottom:10px;
+    background:radial-gradient(120% 100% at 50% 100%, #1a1040 0%, #0b0e1a 70%); border:1px solid var(--line);}
+  .stars{position:absolute; inset:0; pointer-events:none;
+    background-image:radial-gradient(1.5px 1.5px at 20% 30%,#fff8,transparent),
+    radial-gradient(1.5px 1.5px at 70% 60%,#fff6,transparent),
+    radial-gradient(1px 1px at 40% 80%,#fff5,transparent),
+    radial-gradient(1px 1px at 85% 20%,#fff7,transparent),
+    radial-gradient(1.2px 1.2px at 10% 70%,#fff5,transparent);
+    animation:starsMove 2.5s linear infinite;}
+  @keyframes starsMove{from{background-position:0 0,0 0,0 0,0 0,0 0}to{background-position:-40px 0,-60px 0,-30px 0,-80px 0,-50px 0}}
+  #rocketCanvas{position:absolute; inset:0; width:100%; height:100%; display:block;}
+  .mult{position:absolute; left:0; right:0; top:24px; text-align:center; font-size:48px; font-weight:900;
+    font-variant-numeric:tabular-nums; text-shadow:0 0 24px rgba(0,229,255,.7); transition:color .2s; pointer-events:none;}
+  .mult.cash{color:var(--green);} .mult.dead{color:var(--red);}
+  .sub{position:absolute; left:0; right:0; top:80px; text-align:center; color:#9ab; font-size:12px; pointer-events:none;}
+  .resultline{position:absolute; left:0; right:0; bottom:10px; text-align:center; font-weight:800; font-size:14px; pointer-events:none; z-index:5;}
+  .resultline.win{color:var(--green);} .resultline.lose{color:var(--red);}
+
+  .round-bar{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px;}
+  .bet-timer{display:flex; align-items:center; gap:5px; padding:6px 12px; border-radius:999px;
+    background:rgba(255,255,255,.06); border:1px solid var(--line);
+    font-size:10.5px; font-weight:900; letter-spacing:1.2px; color:#9ab;}
+  .bet-timer b{color:var(--gold); font-size:14px; letter-spacing:0;}
+  .bet-timer.fly{border-color:rgba(0,230,118,.4); color:var(--green); background:rgba(0,230,118,.1);}
+  .round-num{padding:6px 12px; border-radius:999px; background:rgba(124,77,255,.18);
+    border:1px solid rgba(124,77,255,.35); font-size:11px; font-weight:900; color:#c9a0ff;}
+
+  .players-header{font-size:13px; color:#9ab; font-weight:700; margin:15px 0 10px; padding:0 4px;}
+  .players-header b{color:#fff; font-size:14px;}
+  .players-list{display:flex; flex-direction:column; gap:8px;}
+  .player-row{
+    display:flex; align-items:center; gap:12px;
+    background:rgba(255,255,255,.05); border:1px solid var(--line);
+    border-radius:16px; padding:8px 14px;
+    transition: background .3s, border-color .3s;
+  }
+  .player-row.cashed{background:rgba(0,230,118,.1); border-color:rgba(0,230,118,.3);}
+  .player-row.crashed{opacity:.6; background:rgba(0,0,0,.2);}
+  .p-avatar{
+    width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-weight:900; font-size:18px; color:#fff; flex-shrink:0;
+  }
+  .p-info{flex:1; display:flex; flex-direction:column; gap:2px; overflow:hidden;}
+  .p-name{font-size:15px; font-weight:700; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .p-bet{font-size:12px; color:#9ab; font-weight:600;}
+  .p-result{display:flex; align-items:center; gap:12px; flex-shrink:0; text-align:right;}
+  .p-mult{font-size:14px; font-weight:800; color:#9ab;}
+  .p-win{font-size:15px; font-weight:900; color:#fff;}
+  .player-row.cashed .p-mult{color:var(--green);}
+  .player-row.cashed .p-win{color:var(--green);}
+  .player-row.crashed .p-mult{color:var(--red); font-size:13px;}
+  .player-row.crashed .p-win{color:var(--red); font-size:13px;}
+
+  .grid{display:grid; grid-template-columns:repeat(5,1fr); gap:7px; margin-top:12px;}
+  .cell{aspect-ratio:1; border-radius:12px; border:1px solid var(--line);
+    background:linear-gradient(160deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+    font-size:22px; display:flex; align-items:center; justify-content:center; transition:transform .12s, background .2s;}
+  .cell:active{transform:scale(.9);}
+  .cell.gem{background:linear-gradient(160deg,#00c853,#00e57655); box-shadow:0 0 14px rgba(0,230,118,.4);}
+  .cell.bomb{background:linear-gradient(160deg,#d32f2f,#ff525255); box-shadow:0 0 14px rgba(255,82,82,.4);}
+  .cell.dim{opacity:.4;}
+
+  .seg{display:flex; gap:6px; margin-bottom:10px;}
+  .seg button{flex:1; padding:9px 0; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:#cde; font-weight:800; font-size:13px;}
+  .seg button.sel{background:linear-gradient(90deg,var(--purple),var(--pink)); border-color:transparent; color:#fff;}
+
+  .row{display:flex; justify-content:space-between; font-size:13px; color:#9ab; margin-bottom:10px; flex-wrap:wrap; gap:4px;}
+  .row b{color:#fff;}
+  input[type=range]{width:100%; accent-color:var(--pink); height:34px;}
+
+  .upg-fields{display:flex; align-items:flex-start; gap:8px; margin-bottom:4px;}
+  .upg-field{flex:1; min-width:0;}
+  .upg-field label{display:block; font-size:10px; font-weight:900; letter-spacing:1.3px; color:#9ab; margin-bottom:6px;}
+  .upg-input{display:flex; align-items:center; gap:6px; background:rgba(0,0,0,.35);
+    border:1px solid var(--line); border-radius:12px; padding:11px 12px;}
+  .upg-input span{font-size:13px; font-weight:900; color:var(--gold);}
+  .upg-input input{width:100%; min-width:0; background:none; border:none; outline:none; color:#fff; font-size:15px; font-weight:800; padding:0;}
+  .upg-arrow{color:#4d3d6b; font-size:17px; font-weight:900; padding-top:30px;}
+  .qrow{display:flex; gap:5px; margin-top:6px;}
+  .qrow button{flex:1; padding:8px 0; border-radius:9px;
+    background:rgba(255,255,255,.08); border:1px solid var(--line);
+    color:#cde; font-size:12px; font-weight:800; cursor:pointer;
+    transition:transform .08s, background .15s;}
+  .qrow button:active{transform:scale(.94); background:rgba(255,255,255,.18);}
+
+  .upg-circle-wrap{display:flex; justify-content:center; padding:16px 0 6px;}
+  .upg-circle{position:relative; width:min(62vw,238px); aspect-ratio:1; border-radius:50%;
+    background:conic-gradient(var(--green) 0deg,#16924f 175deg,#2a1a3e 175deg,#221334 360deg);
+    box-shadow:0 0 44px -14px rgba(0,230,118,.7),inset 0 0 0 1px rgba(255,255,255,.07);
+    transition:box-shadow .35s;}
+  .upg-circle.win{box-shadow:0 0 66px -6px rgba(0,230,118,.95),inset 0 0 0 1px rgba(0,230,118,.5);}
+  .upg-circle.lose{box-shadow:0 0 66px -6px rgba(255,82,82,.95),inset 0 0 0 1px rgba(255,82,82,.5);}
+  .upg-needle{position:absolute; left:50%; bottom:50%; width:4px; height:calc(50% - 16px); border-radius:3px;
+    background:linear-gradient(to top,rgba(255,255,255,.15),#fff 50%,var(--pink));
+    transform-origin:50% 100%; transform:translateX(-50%) rotate(0deg);
+    filter:drop-shadow(0 0 10px rgba(255,45,120,.95)); z-index:1;}
+  .upg-needle::after{content:''; position:absolute; top:-14px; left:50%; transform:translateX(-50%);
+    width:0; height:0; border-left:8px solid transparent; border-right:8px solid transparent;
+    border-bottom:16px solid var(--pink); filter:drop-shadow(0 0 8px rgba(255,45,120,.9));}
+  .upg-center{position:absolute; inset:23%; border-radius:50%; background:var(--bg); z-index:2;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border:1px solid var(--line); box-shadow:0 0 26px rgba(0,0,0,.7) inset;}
+  .upg-pct{font-size:min(8.6vw,32px); font-weight:900; letter-spacing:-1px; line-height:1; color:#fff;}
+  .upg-lbl{font-size:9px; font-weight:900; letter-spacing:2.4px; color:#9ab; margin-top:5px;}
+  .upg-mult{font-size:11px; font-weight:900; color:var(--gold); margin-top:4px;}
+
+  .plinko-wrap{position:relative; height:min(56vh,460px); min-height:280px;
+    border-radius:18px; overflow:hidden;
+    background:radial-gradient(circle at 50% 0%,rgba(0,230,118,.16),transparent 66%),#0a0e1a;
+    border:1px solid var(--line); margin-bottom:10px;}
+  #plinkoCv{width:100%; height:100%; display:block;}
+
+  .wheelbox{position:relative; width:min(78vw,300px); height:min(78vw,300px); margin:6px auto 12px;}
+  .wheelbox canvas{width:100%; height:100%;}
+  .pointer{position:absolute; top:-8px; left:50%; transform:translateX(-50%); font-size:26px; filter:drop-shadow(0 0 8px #ffc93c); z-index:2;}
+  .wres{text-align:center; font-size:24px; font-weight:900; min-height:34px;}
+
+  .dice-num{text-align:center; font-size:56px; font-weight:900; font-variant-numeric:tabular-nums; min-height:70px; text-shadow:0 0 20px rgba(0,229,255,.6); transition:.12s;}
+
+  nav{position:fixed; bottom:0; left:0; right:0; width:100%; z-index:20;
+    display:flex; background:rgba(16,19,34,.96); backdrop-filter:blur(12px);
+    border-top:1px solid var(--line); padding:6px 4px calc(6px + env(safe-area-inset-bottom));}
+  nav button{flex:1; background:none; border:0; color:#8a93a8; font-size:9px; font-weight:700;
+    display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 0; border-radius:12px;}
+  nav button span.ic{font-size:20px; filter:grayscale(1); transition:filter .2s, transform .2s;}
+  nav button.on{color:#fff;}
+  nav button.on span.ic{filter:none; transform:translateY(-2px) scale(1.15);}
+
+  #toast{position:fixed; left:50%; bottom:110px; transform:translateX(-50%) translateY(20px);
+    background:rgba(20,24,44,.95); border:1px solid var(--line); color:#fff; font-weight:800;
+    padding:12px 20px; border-radius:14px; z-index:50; opacity:0; pointer-events:none; transition:.25s;
+    max-width:86vw; text-align:center; box-shadow:0 10px 30px rgba(0,0,0,.5);}
+  #toast.show{opacity:1; transform:translateX(-50%) translateY(0);}
+  #toast.good{border-color:var(--green); box-shadow:0 0 24px rgba(0,230,118,.4);}
+  #toast.bad{border-color:var(--red);}
+  #toast.gold{border-color:var(--gold); box-shadow:0 0 24px rgba(255,201,60,.45);}
+
+  .disclaim{text-align:center; font-size:10px; color:#667; padding:4px 0 10px;}
+</style>
+</head>
+<body>
+<div class="blob b1"></div><div class="blob b2"></div><div class="blob b3"></div>
+<div id="app">
+  <header>
+    <div class="logo" onclick="tab('menu', document.querySelector('nav button[data-g=\'menu\']'))">СИМУЛЯТОР<br>ЛУДОМАНИИ<small>FAKE CASINO · ТОЛЬКО ФАН</small></div>
+    <div class="head-right">
+      <div class="balance-wrap">
+        <div class="balance" id="balance">...</div>
+        <button class="topup-btn" onclick="addFunds()">+</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- МЕНЮ -->
+    <section class="game on" id="g-menu">
+      <div class="menu-title">ВЫБЕРИ ИГРУ</div>
+      <div class="menu-grid">
+        <button class="menu-card" style="--c1:#7c1a47; --c2:#ff2d78;" onclick="tab('rocket', document.querySelector('nav button[data-g=\'rocket\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-rocket">…</span></div>
+          <div class="icon">🚀</div>
+          <div class="title">Ракетка</div>
+        </button>
+        <button class="menu-card" style="--c1:#1a0b2e; --c2:#ff6b00;" onclick="tab('mines', document.querySelector('nav button[data-g=\'mines\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-mines">…</span></div>
+          <div class="icon">💣</div>
+          <div class="title">Мины</div>
+        </button>
+        <button class="menu-card" style="--c1:#8b6900; --c2:#ffc93c;" onclick="tab('up', document.querySelector('nav button[data-g=\'up\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-up">…</span></div>
+          <div class="icon">⚡</div>
+          <div class="title">Апгрейд</div>
+        </button>
+        <button class="menu-card" style="--c1:#0b4a52; --c2:#00e5ff;" onclick="tab('dice', document.querySelector('nav button[data-g=\'dice\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-dice">…</span></div>
+          <div class="icon">🎲</div>
+          <div class="title">Кости</div>
+        </button>
+        <button class="menu-card" style="--c1:#5c0b11; --c2:#ff5252;" onclick="tab('wheel', document.querySelector('nav button[data-g=\'wheel\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-wheel">…</span></div>
+          <div class="icon">🎡</div>
+          <div class="title">Колесо</div>
+        </button>
+        <button class="menu-card" style="--c1:#0a3b1f; --c2:#00e676;" onclick="tab('plinko', document.querySelector('nav button[data-g=\'plinko\']'))">
+          <div class="menu-live"><div class="dot"></div><span id="m-online-plinko">…</span></div>
+          <div class="icon">🔻</div>
+          <div class="title">Плинко</div>
+        </button>
+      </div>
+      <p class="disclaim" style="margin-top:30px;">Игра на виртуальные рубли. Настоящих денег здесь нет и не будет.</p>
+    </section>
+
+    <!-- РАКЕТКА -->
+    <section class="game" id="g-rocket">
+      <div class="sky">
+        <div class="stars"></div>
+        <canvas id="rocketCanvas"></canvas>
+        <div class="mult" id="cMult">1.00x</div>
+        <div class="sub" id="cSub">Ждём ставки…</div>
+        <div class="resultline" id="cRes"></div>
+      </div>
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <div class="live-badge"><div class="live-dot"></div><span id="online-rocket">0</span> онлайн</div>
+      </div>
+
+      <button class="bigbtn blue" id="rocketBtn" onclick="rocketClick()">
+        <div style="font-size:16px; font-weight:900;">СДЕЛАТЬ СТАВКУ</div>
+        <span id="rocketBtnSub">на следующий раунд</span>
+      </button>
+
+      <div class="panel" style="margin-top:12px;">
+        <div class="round-bar">
+          <div class="bet-timer" id="rocketTimer">⏱ СТАВКИ · <b>8с</b></div>
+          <div class="round-num" id="rocketRound">#1</div>
+        </div>
+        
+        <p class="ptitle">Ваша ставка</p>
+        <div class="betrow">
+          <input type="number" id="rocketBet" value="100" min="1" inputmode="decimal">
+          <div class="chips">
+            <button onclick="chip('rocketBet',10)">10</button>
+            <button onclick="chip('rocketBet',100)">100</button>
+            <button onclick="chip('rocketBet',500)">500</button>
+            <button onclick="half('rocketBet')">½</button>
+            <button onclick="dbl('rocketBet')">x2</button>
+          </div>
+        </div>
+
+        <div class="players-header" id="pHeader">
+          Игроков <b id="pCount">0</b> · банк <b id="pBank">0</b> Р
+        </div>
+        <div class="players-list" id="playersList"></div>
+      </div>
+    </section>
+
+    <!-- МИНЫ -->
+    <section class="game" id="g-mines">
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-mines">0</span> онлайн</div></div>
+      <div class="panel">
+        <p class="ptitle">Количество мин</p>
+        <div class="seg" id="mineSeg">
+          <button data-m="1" onclick="minePick(1,this)">1</button>
+          <button data-m="3" class="sel" onclick="minePick(3,this)">3</button>
+          <button data-m="5" onclick="minePick(5,this)">5</button>
+          <button data-m="10" onclick="minePick(10,this)">10</button>
+        </div>
+        <p class="ptitle">Ставка</p>
+        <div class="betrow">
+          <input type="number" id="minesBet" value="100" min="1" inputmode="decimal">
+          <div class="chips">
+            <button onclick="chip('minesBet',10)">10</button>
+            <button onclick="chip('minesBet',100)">100</button>
+            <button onclick="chip('minesBet',500)">500</button>
+            <button onclick="half('minesBet')">½</button>
+            <button onclick="dbl('minesBet')">x2</button>
+          </div>
+        </div>
+        <div class="row"><span>Множитель: <b id="mMult">1.00x</b></span><span>След. шаг: <b id="mNext">—</b></span></div>
+        <button class="bigbtn" id="minesBtn" onclick="minesStart()">💣 ИГРАТЬ</button>
+        <button class="bigbtn gold" id="minesCash" style="margin-top:8px; display:none" onclick="minesCash()">ЗАБРАТЬ</button>
+        <div class="grid" id="mGrid"></div>
+      </div>
+    </section>
+
+    <!-- АПГРЕЙДЕР -->
+    <section class="game" id="g-up">
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-up">0</span> онлайн</div></div>
+      <div class="panel">
+        <div class="upg-fields">
+          <div class="upg-field">
+            <label>СТАВКА</label>
+            <div class="upg-input"><span>Р</span><input type="number" id="upBet" value="100" min="1" inputmode="decimal"></div>
+            <div class="qrow">
+              <button onclick="upAdj('upBet',-50)">−50</button>
+              <button onclick="upAdj('upBet',50)">+50</button>
+            </div>
+          </div>
+          <div class="upg-arrow">→</div>
+          <div class="upg-field">
+            <label>ПОЛУЧИТЬ</label>
+            <div class="upg-input"><span>Р</span><input type="number" id="upWin" value="200" min="2" inputmode="decimal"></div>
+            <div class="qrow">
+              <button onclick="upAdj('upWin',-50)">−50</button>
+              <button onclick="upAdj('upWin',50)">+50</button>
+            </div>
+          </div>
+        </div>
+        <div class="upg-circle-wrap">
+          <div class="upg-circle" id="upCircle">
+            <div class="upg-needle" id="upNeedle"></div>
+            <div class="upg-center">
+              <div class="upg-pct" id="upPct">48.5%</div>
+              <div class="upg-lbl">ШАНС</div>
+              <div class="upg-mult" id="upMult">2.00x</div>
+            </div>
+          </div>
+        </div>
+        <button class="bigbtn" id="upBtn" onclick="upStart()">⚡ АПГРЕЙДНУТЬ</button>
+      </div>
+    </section>
+
+    <!-- КОСТИ -->
+    <section class="game" id="g-dice">
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-dice">0</span> онлайн</div></div>
+      <div class="panel">
+        <div class="dice-num" id="diceNum">50.00</div>
+        <div class="seg">
+          <button id="dOver" class="sel" onclick="diceMode('over')">БОЛЬШЕ ▲</button>
+          <button id="dUnder" onclick="diceMode('under')">МЕНЬШЕ ▼</button>
+        </div>
+        <input type="range" id="dTarget" min="2" max="98" value="50" oninput="diceRender()">
+        <div class="row"><span>Порог: <b id="dT">50</b></span><span>Шанс: <b id="dC">50%</b></span><span>Выплата: <b id="dP">1.90x</b></span></div>
+        <p class="ptitle">Ставка</p>
+        <div class="betrow">
+          <input type="number" id="diceBet" value="100" min="1" inputmode="decimal">
+          <div class="chips">
+            <button onclick="chip('diceBet',10)">10</button>
+            <button onclick="chip('diceBet',100)">100</button>
+            <button onclick="chip('diceBet',500)">500</button>
+            <button onclick="half('diceBet')">½</button>
+            <button onclick="dbl('diceBet')">x2</button>
+          </div>
+        </div>
+        <button class="bigbtn" id="diceBtn" onclick="diceRoll()">🎲 БРОСИТЬ</button>
+      </div>
+    </section>
+
+    <!-- КОЛЕСО -->
+    <section class="game" id="g-wheel">
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-wheel">0</span> онлайн</div></div>
+      <div class="panel" style="text-align:center">
+        <div class="wheelbox">
+          <div class="pointer">▼</div>
+          <canvas id="wheelCv" width="540" height="540"></canvas>
+        </div>
+        <div class="wres" id="wRes"></div>
+        <p class="ptitle" style="text-align:left">Ставка</p>
+        <div class="betrow">
+          <input type="number" id="wheelBet" value="100" min="1" inputmode="decimal">
+          <div class="chips">
+            <button onclick="chip('wheelBet',10)">10</button>
+            <button onclick="chip('wheelBet',100)">100</button>
+            <button onclick="chip('wheelBet',500)">500</button>
+            <button onclick="half('wheelBet')">½</button>
+            <button onclick="dbl('wheelBet')">x2</button>
+          </div>
+        </div>
+        <button class="bigbtn gold" id="wheelBtn" onclick="wheelSpin()">🎡 КРУТИТЬ</button>
+      </div>
+    </section>
+
+    <!-- ПЛИНКО -->
+    <section class="game" id="g-plinko">
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-plinko">0</span> онлайн</div></div>
+      <div class="plinko-wrap">
+        <canvas id="plinkoCv"></canvas>
+      </div>
+      <div class="panel">
+        <p class="ptitle">Ставка</p>
+        <div class="betrow">
+          <input type="number" id="plinkoBet" value="100" min="1" inputmode="decimal">
+          <div class="chips">
+            <button onclick="chip('plinkoBet',10)">10</button>
+            <button onclick="chip('plinkoBet',100)">100</button>
+            <button onclick="chip('plinkoBet',500)">500</button>
+            <button onclick="half('plinkoBet')">½</button>
+            <button onclick="dbl('plinkoBet')">x2</button>
+          </div>
+        </div>
+        <button class="bigbtn green" id="plinkoBtn" onclick="plinkoDrop()">🔻 БРОСИТЬ ШАРИК</button>
+      </div>
+    </section>
+  </main>
+
+  <nav>
+    <button class="on" data-g="menu" onclick="tab('menu',this)"><span class="ic">🏠</span>Меню</button>
+    <button data-g="rocket" onclick="tab('rocket',this)"><span class="ic">🚀</span>Ракетка</button>
+    <button data-g="mines" onclick="tab('mines',this)"><span class="ic">💣</span>Мины</button>
+    <button data-g="up" onclick="tab('up',this)"><span class="ic">⚡</span>Апгрейд</button>
+    <button data-g="dice" onclick="tab('dice',this)"><span class="ic">🎲</span>Кости</button>
+    <button data-g="wheel" onclick="tab('wheel',this)"><span class="ic">🎡</span>Колесо</button>
+    <button data-g="plinko" onclick="tab('plinko',this)"><span class="ic">🔻</span>Плинко</button>
+  </nav>
+
+  <div id="toast"></div>
+</div>
+
+<!-- ПОДКЛЮЧЕНИЕ К СЕРВЕРУ -->
+<script src="https://cdn.socket.io/4.8.4/socket.io.min.js"></script>
+<script>
+'use strict';
+
+// === НАСТРОЙКИ СЕРВЕРА ===
+const SERVER_URL = 'https://simulator-ludoman.layero.app'; 
+const socket = io(SERVER_URL);
+
+// === БАЗА ===
+const S = { bal: 0 };
+const fmt = n => n.toLocaleString('ru-RU',{maximumFractionDigits:2});
+
+function setBal(v){
+  S.bal = v;
+  const el = document.getElementById('balance');
+  el.textContent = fmt(S.bal);
+  el.classList.add('pop');
+  setTimeout(()=>el.classList.remove('pop'),200);
+}
+function toast(msg,type){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='show '+(type||'');
+  clearTimeout(t._t); t._t=setTimeout(()=>t.className='',2400);
+}
+function addFunds(){ 
+  toast('Попросите администратора пополнить баланс!', 'bad'); 
+}
+
+// === НАВИГАЦИЯ ===
+function tab(g,btn){
+  document.querySelectorAll('.game').forEach(s=>s.classList.remove('on'));
+  document.getElementById('g-'+g).classList.add('on');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  if(g==='rocket') setTimeout(rocketResize,40);
+  if(g==='plinko'){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>plinkoGeometry()));
+    setTimeout(plinkoGeometry, 60);
+  }
+}
+function chip(id,v){ document.getElementById(id).value=v; }
+function half(id){ const i=document.getElementById(id); i.value=Math.max(1,Math.floor((i.value||0)/2)); }
+function dbl(id){ const i=document.getElementById(id); i.value=Math.min(Math.max(S.bal,1),Math.round((i.value||0)*2*100)/100); }
+function readBet(id){
+  let v = parseFloat(document.getElementById(id).value);
+  if(!v || v<=0){ toast('Ставка должна быть больше нуля','bad'); return 0; }
+  if(v > S.bal){ toast('Недостаточно рублей 💸','bad'); return 0; }
+  return Math.round(v*100)/100;
+}
+
+// === ОНЛАЙН (ИМИТАЦИЯ ДЛЯ КРАСОТЫ) ===
+const onlineData = {
+  rocket: { base: 124, el: 'online-rocket', mel: 'm-online-rocket' },
+  mines:  { base: 42, el: 'online-mines', mel: 'm-online-mines' },
+  up:     { base: 88, el: 'online-up', mel: 'm-online-up' },
+  dice:   { base: 215, el: 'online-dice', mel: 'm-online-dice' },
+  wheel:  { base: 63, el: 'online-wheel', mel: 'm-online-wheel' },
+  plinko: { base: 347, el: 'online-plinko', mel: 'm-online-plinko' }
+};
+function updateOnlineCounters(){
+  for(let key in onlineData){
+    const d = onlineData[key];
+    let displayVal = d.base + Math.floor(Math.random() * 20) - 10;
+    if(key === 'rocket' && typeof RK !== 'undefined'){
+       displayVal += RK.playersData.length;
+    }
+    const mainEl = document.getElementById(d.el);
+    const menuEl = document.getElementById(d.mel);
+    if(mainEl) mainEl.textContent = displayVal;
+    if(menuEl) menuEl.textContent = displayVal + ' играют';
+  }
+}
+
+// === РАКЕТКА (МУЛЬТИПЛЕЕР) ===
+const rkCv = document.getElementById('rocketCanvas');
+const rkCtx = rkCv.getContext('2d');
+let rkW = 0, rkH = 0;
+
+const RK = {
+  phase:'waiting', mult:1, crashAt:2, pts:[],
+  playersData:[], myBet:0, pendingBet:0, cashedOut:false, timeLeft:8
+};
+
+// Имя игрока
+let myName = localStorage.getItem('lm_name');
+if(!myName) {
+  myName = 'Игрок_' + Math.floor(Math.random() * 10000);
+  localStorage.setItem('lm_name', myName);
+}
+
+function rocketResize(){
+  const rect = rkCv.getBoundingClientRect();
+  if(!rect.width || !rect.height) return;
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  rkCv.width = Math.round(rect.width*dpr);
+  rkCv.height = Math.round(rect.height*dpr);
+  rkW = rect.width; rkH = rect.height;
+  rkCtx.setTransform(dpr,0,0,dpr,0,0);
+  rocketDraw();
+}
+
+function rocketDraw(boom){
+  if(!rkW) return;
+  const ctx = rkCtx;
+  ctx.clearRect(0,0,rkW,rkH);
+  ctx.strokeStyle='rgba(124,77,255,.10)'; ctx.lineWidth=1;
+  for(let x=0;x<rkW;x+=32){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,rkH); ctx.stroke(); }
+  for(let y=0;y<rkH;y+=32){ ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(rkW,y); ctx.stroke(); }
+
+  if(RK.pts.length>1){
+    const maxT = Math.max(4, RK.pts[RK.pts.length-1].t);
+    const maxM = Math.max(2, RK.mult);
+    const logMax = Math.log(maxM);
+    const px = t => 18 + (t/maxT)*(rkW-44);
+    const py = m => (rkH-26) - (Math.log(Math.max(1,m))/logMax)*(rkH-82);
+
+    ctx.beginPath();
+    ctx.moveTo(px(RK.pts[0].t), py(RK.pts[0].m));
+    for(let i=1;i<RK.pts.length;i++) ctx.lineTo(px(RK.pts[i].t), py(RK.pts[i].m));
+    ctx.lineTo(px(RK.pts[RK.pts.length-1].t), rkH-26);
+    ctx.lineTo(px(RK.pts[0].t), rkH-26);
+    ctx.closePath();
+    const g = ctx.createLinearGradient(0,0,0,rkH);
+    g.addColorStop(0, boom?'rgba(255,82,82,.45)':'rgba(255,45,120,.45)');
+    g.addColorStop(1, 'rgba(255,45,120,0)');
+    ctx.fillStyle = g; ctx.fill();
+
+    ctx.beginPath();
+    ctx.moveTo(px(RK.pts[0].t), py(RK.pts[0].m));
+    for(let i=1;i<RK.pts.length;i++) ctx.lineTo(px(RK.pts[i].t), py(RK.pts[i].m));
+    ctx.strokeStyle = boom?'#ff5252':'#ff2d78';
+    ctx.lineWidth=3.5; ctx.lineJoin='round'; ctx.lineCap='round';
+    ctx.shadowColor = boom?'#ff5252':'#ff2d78';
+    ctx.shadowBlur = 16; ctx.stroke(); ctx.shadowBlur = 0;
+
+    const last = RK.pts[RK.pts.length-1];
+    ctx.font='24px serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(boom?'💥':'🚀', px(last.t), py(last.m));
+  } else {
+    ctx.globalAlpha=.4; ctx.font='30px serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('🚀', rkW*0.32, rkH*0.72);
+    ctx.globalAlpha=1;
+  }
+}
+
+function renderPlayers(){
+  const list = document.getElementById('playersList');
+  let totalBank = 0;
+  list.innerHTML = '';
+  
+  RK.playersData.forEach(p => {
+    totalBank += p.bet;
+    const initial = p.name ? p.name[0].toUpperCase() : '?';
+    const row = document.createElement('div');
+    row.className = 'player-row';
+    
+    let multText = 'x' + RK.mult.toFixed(2).replace('.', ',');
+    let winText = p.bet + ' Р';
+    
+    if (p.cashedOut) {
+      row.classList.add('cashed');
+      multText = 'x' + p.cashoutMult.toFixed(2).replace('.', ',');
+      winText = fmt(p.bet * p.cashoutMult) + ' Р';
+    } else if (RK.phase === 'flying') {
+      winText = fmt(p.bet * RK.mult) + ' Р';
+    } else if (RK.phase === 'crashed') {
+      row.classList.add('crashed');
+      winText = 'сгорела';
+    }
+
+    // Подсвечиваем себя
+    const isMe = p.name === myName;
+    const avatarColor = isMe ? '#ffc93c' : '#7c4dff';
+
+    row.innerHTML = `
+      <div class="p-avatar" style="background: ${avatarColor};">${initial}</div>
+      <div class="p-info">
+        <div class="p-name">${p.name} ${isMe ? '(Вы)' : ''}</div>
+        <div class="p-bet">${fmt(p.bet)} Р</div>
+      </div>
+      <div class="p-result">
+        <div class="p-mult">${multText}</div>
+        <div class="p-win">${winText}</div>
+      </div>
+    `;
+    list.appendChild(row);
+  });
+  
+  document.getElementById('pCount').textContent = RK.playersData.length;
+  document.getElementById('pBank').textContent = fmt(totalBank);
+}
+
+function rocketUpdateUI(){
+  const btn = document.getElementById('rocketBtn');
+  const bet = Math.max(1, Math.floor(parseFloat(document.getElementById('rocketBet').value)||1));
+  btn.className = 'bigbtn';
+  btn.disabled = false;
+
+  if(RK.phase === 'waiting'){
+    if(RK.myBet > 0){
+      btn.innerHTML = `<div style="font-size:16px; font-weight:900;">СТАВКА ПРИНЯТА</div><span>${fmt(RK.myBet)} Р</span>`;
+      btn.classList.add('gray'); btn.disabled = true;
+    } else {
+      btn.innerHTML = `<div style="font-size:16px; font-weight:900;">СДЕЛАТЬ СТАВКУ</div><span>${fmt(bet)} Р</span>`;
+      btn.classList.add('blue');
+    }
+    return;
+  }
+
+  if(RK.phase === 'flying'){
+    if(RK.myBet > 0 && !RK.cashedOut){
+      btn.innerHTML = `<div style="font-size:18px; font-weight:900;">💰 ЗАБРАТЬ ${RK.mult.toFixed(2)}x</div><span>${fmt(RK.myBet * RK.mult)} Р</span>`;
+      btn.classList.add('green');
+    } else if(RK.myBet > 0 && RK.cashedOut){
+      btn.innerHTML = `<div style="font-size:16px; font-weight:900;">ЗАБРАНО ✅</div><span>Ждите след. раунда</span>`;
+      btn.classList.add('gray'); btn.disabled = true;
+    } else {
+      if(RK.pendingBet > 0){
+        btn.innerHTML = `<div style="font-size:16px; font-weight:900;">ЗАБРОНИРОВАНО</div><span>${fmt(RK.pendingBet)} Р</span>`;
+        btn.classList.add('gray'); btn.disabled = true;
+      } else {
+        btn.innerHTML = `<div style="font-size:16px; font-weight:900;">СДЕЛАТЬ СТАВКУ</div><span>на след. раунд</span>`;
+        btn.classList.add('blue');
+      }
+    }
+    return;
+  }
+
+  // crashed
+  if(RK.pendingBet > 0){
+    btn.innerHTML = `<div style="font-size:16px; font-weight:900;">ЗАБРОНИРОВАНО</div><span>${fmt(RK.pendingBet)} Р</span>`;
+    btn.classList.add('gray'); btn.disabled = true;
+  } else {
+    btn.innerHTML = `<div style="font-size:16px; font-weight:900;">СДЕЛАТЬ СТАВКУ</div><span>на след. раунд</span>`;
+    btn.classList.add('blue');
+  }
+}
+
+function rocketClick(){
+  const bet = Math.max(1, Math.floor(parseFloat(document.getElementById('rocketBet').value)||1));
+  if(S.bal < bet && RK.phase === 'waiting') { toast('Недостаточно рублей', 'bad'); return; }
+
+  if(RK.phase === 'waiting' && RK.myBet === 0){
+    socket.emit('place_bet', bet);
+  } else if (RK.phase === 'flying' && RK.myBet > 0 && !RK.cashedOut){
+    socket.emit('cash_out');
+  } else if (RK.phase !== 'waiting' && RK.myBet === 0) {
+    socket.emit('place_bet', bet); // Забронировать на след
+  }
+}
+
+// === СЛУШАЕМ СЕРВЕР ===
+socket.on('connect', () => {
+  socket.emit('set_name', myName); // Отправляем серверу свой ник
+});
+
+socket.on('init', (data) => {
+  setBal(data.balance);
+  toast('Подключено к игре', 'good');
+});
+
+socket.on('balance_update', (bal) => {
+  setBal(bal);
+});
+
+socket.on('game_state', (state) => {
+  RK.phase = state.phase;
+  RK.timeLeft = state.timeLeft;
+  RK.mult = state.multiplier;
+  
+  const tEl = document.getElementById('rocketTimer');
+  if (RK.phase === 'waiting') {
+    tEl.classList.remove('fly');
+    tEl.innerHTML = '⏱ СТАВКИ · <b>' + RK.timeLeft + 'с</b>';
+    document.getElementById('cSub').textContent = 'Ставки открыты';
+    document.getElementById('cMult').className = 'mult';
+    document.getElementById('cMult').textContent = '1.00x';
+    RK.pts = []; 
+  } else if (RK.phase === 'flying') {
+    tEl.classList.add('fly');
+    tEl.innerHTML = '🚀 В ПОЛЁТЕ';
+    document.getElementById('cSub').textContent = 'Забирай, пока не рвануло!';
+    RK.pts = [{t:0, m:1}];
+  } else if (RK.phase === 'crashed') {
+    tEl.classList.remove('fly');
+    tEl.innerHTML = '⏱ СЛЕД. РАУНД…';
+    document.getElementById('cSub').textContent = 'Краш!';
+  }
+  rocketUpdateUI();
+});
+
+socket.on('multiplier_update', (mult) => {
+  RK.mult = mult;
+  if (RK.phase !== 'flying') return;
+  
+  // Вычисляем время на основе множителя (Math.exp(0.42 * t) = mult)
+  const t = Math.log(mult) / 0.42;
+  RK.pts.push({ t: t, m: mult });
+
+  const mEl = document.getElementById('cMult');
+  mEl.textContent = mult.toFixed(2) + 'x';
+  mEl.style.color = mult < 2 ? '#00e5ff' : mult < 5 ? '#ffc93c' : '#ff2d78';
+
+  if(RK.myBet > 0 && !RK.cashedOut){
+    document.getElementById('rocketBtn').innerHTML = 
+      `<div style="font-size:18px; font-weight:900;">💰 ЗАБРАТЬ ${mult.toFixed(2)}x</div><span>${fmt(RK.myBet * mult)} Р</span>`;
+  }
+
+  rocketDraw();
+  renderPlayers();
+});
+
+socket.on('game_crash', (data) => {
+  RK.phase = 'crashed';
+  rocketDraw(true);
+  const mEl = document.getElementById('cMult');
+  mEl.textContent = data.crashAt.toFixed(2) + 'x 💥';
+  mEl.className = 'mult dead';
+  
+  if(RK.myBet > 0 && !RK.cashedOut){
+    toast('Краш на ' + data.crashAt.toFixed(2) + 'x — ставка сгорела 💀', 'bad');
+  }
+  RK.myBet = 0;
+  RK.cashedOut = false;
+  rocketUpdateUI();
+});
+
+socket.on('players_update', (data) => {
+  RK.playersData = data.players;
+  
+  // Синхронизируем свою ставку
+  const me = data.players.find(p => p.name === myName);
+  if (me) {
+    RK.myBet = me.bet;
+    RK.cashedOut = me.cashedOut;
+  } else if (RK.phase === 'waiting') {
+    RK.myBet = 0;
+  }
+  
+  renderPlayers();
+  rocketUpdateUI();
+});
+
+socket.on('cashout_success', (data) => {
+  document.getElementById('cRes').textContent = '✅ Забрал ' + fmt(data.win) + ' Р';
+  document.getElementById('cRes').className = 'resultline win';
+  toast('💰 Забрал ' + fmt(data.win) + ' Р на ' + data.mult.toFixed(2) + 'x', 'gold');
+  RK.cashedOut = true;
+  rocketUpdateUI();
+});
+
+socket.on('toast', (data) => {
+  toast(data.msg, data.type);
+});
+
+
+// === ЛОКАЛЬНЫЕ ИГРЫ (МИНЫ, АПГРЕЙД, КОСТИ, КОЛЕСО, ПЛИНКО) ===
+// (В будущем их тоже можно перенести на сервер, но пока играем локально)
+
+/* МИНЫ */
+let M = { mineCount:3, active:false };
+const GRID_N = 25;
+function minePick(m,btn){
+  if(M.active) return;
+  M.mineCount = m;
+  document.querySelectorAll('#mineSeg button').forEach(b=>b.classList.remove('sel'));
+  btn.classList.add('sel');
+}
+function minesMult(k,m){
+  let p=1; for(let i=0;i<k;i++) p *= (GRID_N-i)/(GRID_N-m-i); return p*0.97;
+}
+function minesStart(){
+  if(M.active) return;
+  const bet = readBet('minesBet'); if(!bet) return;
+  setBal(S.bal - bet); // Локальное списание
+  M = { mineCount:M.mineCount, active:true, bet, mines:new Set(), opened:new Set() };
+  while(M.mines.size < M.mineCount) M.mines.add(Math.floor(Math.random()*GRID_N));
+  const g = document.getElementById('mGrid'); g.innerHTML='';
+  for(let i=0;i<GRID_N;i++){
+    const c=document.createElement('button');
+    c.className='cell'; c.dataset.i=i; c.onclick=()=>mineClick(i);
+    g.appendChild(c);
+  }
+  document.getElementById('mMult').textContent='1.00x';
+  document.getElementById('mNext').textContent=minesMult(1,M.mineCount).toFixed(2)+'x';
+  document.getElementById('minesBtn').style.display='none';
+  document.getElementById('minesCash').style.display='block';
+  document.getElementById('minesCash').textContent='ЗАБРАТЬ '+fmt(bet)+' Р';
+}
+function mineClick(i){
+  if(!M.active || M.opened.has(i)) return;
+  const cells = document.getElementById('mGrid').children;
+  if(M.mines.has(i)){
+    cells[i].textContent='💣'; cells[i].className='cell bomb';
+    M.active=false;
+    M.mines.forEach(j=>{ if(j!==i){ cells[j].textContent='💣'; cells[j].className='cell bomb dim'; }});
+    document.getElementById('minesCash').style.display='none';
+    document.getElementById('minesBtn').style.display='block';
+    toast('💥 Мина! -'+fmt(M.bet)+' Р','bad');
+    return;
+  }
+  M.opened.add(i);
+  cells[i].textContent='💎'; cells[i].className='cell gem';
+  const k = M.opened.size;
+  const mult = minesMult(k, M.mineCount);
+  document.getElementById('mMult').textContent = mult.toFixed(2)+'x';
+  document.getElementById('minesCash').textContent = 'ЗАБРАТЬ '+fmt(M.bet*mult)+' Р';
+  if(k < GRID_N - M.mineCount) document.getElementById('mNext').textContent = minesMult(k+1, M.mineCount).toFixed(2)+'x';
+  if(k === GRID_N - M.mineCount){ toast('🏅 Поле зачищено полностью!','gold'); minesCash(); }
+}
+function minesCash(){
+  if(!M.active) return;
+  const mult = minesMult(M.opened.size, M.mineCount);
+  const win = M.bet*mult;
+  M.active=false; setBal(S.bal + win);
+  document.getElementById('minesCash').style.display='none';
+  document.getElementById('minesBtn').style.display='block';
+  toast('💰 Забрал '+fmt(win)+' Р ('+mult.toFixed(2)+'x)','gold');
+}
+
+/* АПГРЕЙДЕР */
+let upBusy = false, upAngle = 0;
+function upAdj(id, delta){
+  const el = document.getElementById(id);
+  let v = Math.floor(parseFloat(el.value)||0) + delta;
+  if(id === 'upBet') v = Math.max(1, v);
+  else if(id === 'upWin'){
+    const bet = Math.max(1, Math.floor(parseFloat(document.getElementById('upBet').value)||1));
+    v = Math.max(bet + 1, v);
+  }
+  el.value = v; upRender();
+}
+function upRead(){
+  const bet = Math.max(1, Math.floor(parseFloat(document.getElementById('upBet').value)||1));
+  let win = Math.floor(parseFloat(document.getElementById('upWin').value)||0);
+  if(win < bet+1) win = bet+1;
+  const mult = win/bet;
+  const chance = Math.min(0.97, Math.max(0.01, 0.97/mult));
+  return { bet, win, mult, chance };
+}
+function upRender(){
+  const { mult, chance } = upRead();
+  const deg = chance*360;
+  document.getElementById('upCircle').style.background =
+    `conic-gradient(var(--green) 0deg, #16924f ${deg}deg, #2a1a3e ${deg}deg, #221334 360deg)`;
+  document.getElementById('upPct').textContent = (chance*100).toFixed(1)+'%';
+  document.getElementById('upMult').textContent = mult.toFixed(2)+'x';
+}
+document.getElementById('upBet').addEventListener('input', upRender);
+document.getElementById('upWin').addEventListener('input', upRender);
+
+function upStart(){
+  if(upBusy) return;
+  const { bet, win, mult, chance } = upRead();
+  if(S.bal < bet){ toast('Недостаточно рублей','bad'); return; }
+  setBal(S.bal - bet);
+  upBusy = true;
+  document.getElementById('upBtn').disabled = true;
+  const circle = document.getElementById('upCircle');
+  const needle = document.getElementById('upNeedle');
+  circle.classList.remove('win','lose');
+  const targetAngle = Math.random()*360;
+  const cur = ((upAngle%360)+360)%360;
+  const delta = ((targetAngle-cur)+360)%360;
+  const from = upAngle;
+  const to = upAngle + 360*5 + delta;
+  const t0 = performance.now(), dur = 2600;
+  function anim(now){
+    const p = Math.min(1, (now-t0)/dur);
+    const e = 1-Math.pow(1-p, 3.2);
+    upAngle = from + (to-from)*e;
+    needle.style.transform = `translateX(-50%) rotate(${upAngle}deg)`;
+    if(p<1){ requestAnimationFrame(anim); return; }
+    upBusy = false;
+    document.getElementById('upBtn').disabled = false;
+    const finalAngle = ((upAngle%360)+360)%360;
+    if(finalAngle < chance*360){
+      setBal(S.bal + win);
+      circle.classList.add('win');
+      toast('⚡ Апгрейд удался! +'+fmt(win)+' Р ('+mult.toFixed(2)+'x)','good');
+    } else {
+      circle.classList.add('lose');
+      toast('⚡ Мимо. -'+fmt(bet)+' Р','bad');
+    }
+  }
+  requestAnimationFrame(anim);
+}
+
+/* КОСТИ */
+let D = { mode:'over', busy:false };
+function diceMode(m){
+  D.mode=m;
+  document.getElementById('dOver').classList.toggle('sel', m==='over');
+  document.getElementById('dUnder').classList.toggle('sel', m==='under');
+  diceRender();
+}
+function diceRender(){
+  const t = +document.getElementById('dTarget').value;
+  const chance = D.mode==='over' ? 100-t : t;
+  document.getElementById('dT').textContent = t;
+  document.getElementById('dC').textContent = chance+'%';
+  document.getElementById('dP').textContent = (95/chance).toFixed(2)+'x';
+}
+function diceRoll(){
+  if(D.busy) return;
+  const bet = readBet('diceBet'); if(!bet) return;
+  setBal(S.bal - bet); D.busy = true;
+  document.getElementById('diceBtn').disabled = true;
+  const t = +document.getElementById('dTarget').value;
+  const chance = D.mode==='over' ? 100-t : t;
+  const roll = Math.random()*100;
+  const el = document.getElementById('diceNum');
+  const t0 = performance.now(), dur = 1200;
+  function anim(now){
+    const p = Math.min(1, (now-t0)/dur);
+    el.textContent = (Math.random()*100).toFixed(2);
+    if(p<1){ requestAnimationFrame(anim); return; }
+    el.textContent = roll.toFixed(2);
+    const win = D.mode==='over' ? roll>t : roll<t;
+    setTimeout(()=>{
+      if(win){
+        const w = bet*(95/chance);
+        setBal(S.bal + w);
+        el.style.color='var(--green)';
+        toast('🎲 '+roll.toFixed(2)+' — победа! +'+fmt(w)+' Р','good');
+      } else {
+        el.style.color='var(--red)';
+        toast('🎲 '+roll.toFixed(2)+' — не повезло. -'+fmt(bet)+' Р','bad');
+      }
+      D.busy=false; document.getElementById('diceBtn').disabled=false;
+      setTimeout(()=>el.style.color='', 1500);
+    }, 250);
+  }
+  requestAnimationFrame(anim);
+}
+
+/* КОЛЕСО */
+const SEGS = [
+  {m:0,  w:20, c:'#d32f2f'}, {m:1.5,w:15, c:'#7c4dff'}, {m:2,  w:10, c:'#00e5ff'},
+  {m:0,  w:10, c:'#d32f2f'}, {m:3,  w:6,  c:'#00c853'}, {m:1.5,w:12, c:'#7c4dff'},
+  {m:5,  w:4,  c:'#ffc93c'}, {m:0,  w:8,  c:'#d32f2f'}, {m:2,  w:8,  c:'#00e5ff'},
+  {m:10, w:2,  c:'#ff9800'}, {m:1.5,w:3,  c:'#7c4dff'}, {m:3,  w:2,  c:'#00c853'}
+];
+const SEG_ANGLE = 360/SEGS.length;
+let wheelRot = 0, wheelBusy = false;
+function drawWheel(){
+  const cv = document.getElementById('wheelCv'), ctx = cv.getContext('2d');
+  const cx=270, cy=270, R=250;
+  ctx.clearRect(0,0,540,540);
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(wheelRot*Math.PI/180);
+  SEGS.forEach((s,i)=>{
+    ctx.beginPath(); ctx.moveTo(0,0);
+    ctx.arc(0,0,R, (i*SEG_ANGLE - 90 - SEG_ANGLE/2)*Math.PI/180, (i*SEG_ANGLE - 90 + SEG_ANGLE/2)*Math.PI/180);
+    ctx.closePath(); ctx.fillStyle=s.c; ctx.fill();
+    ctx.strokeStyle='rgba(0,0,0,.45)'; ctx.lineWidth=3; ctx.stroke();
+    ctx.save();
+    ctx.rotate((i*SEG_ANGLE - 90)*Math.PI/180);
+    ctx.fillStyle='#fff'; ctx.font='900 34px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(s.m===0?'✖':s.m+'x', R-60, 0);
+    ctx.restore();
+  });
+  ctx.beginPath(); ctx.arc(0,0,52,0,Math.PI*2); ctx.fillStyle='#0b0e1a'; ctx.fill();
+  ctx.strokeStyle='#ffc93c'; ctx.lineWidth=6; ctx.stroke();
+  ctx.fillStyle='#ffc93c'; ctx.font='900 26px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText('SPIN',0,1);
+  ctx.restore();
+}
+drawWheel();
+
+function wheelSpin(){
+  if(wheelBusy) return;
+  const bet = readBet('wheelBet'); if(!bet) return;
+  setBal(S.bal - bet);
+  wheelBusy = true;
+  document.getElementById('wheelBtn').disabled = true;
+  const total = SEGS.reduce((s,x)=>s+x.w,0);
+  let r = Math.random()*total, idx = 0;
+  for(let i=0;i<SEGS.length;i++){ r -= SEGS[i].w; if(r<=0){ idx=i; break; } }
+  const targetMod = ((360 - (idx*SEG_ANGLE)) % 360 + 360) % 360;
+  const target = wheelRot + 360*5 + ((targetMod - (wheelRot % 360)) % 360 + 360) % 360;
+  const from = wheelRot, t0 = performance.now(), dur = 4200;
+  function anim(now){
+    const t = Math.min(1,(now-t0)/dur);
+    const e = 1-Math.pow(1-t,3);
+    wheelRot = from + (target-from)*e;
+    drawWheel();
+    if(t<1){ requestAnimationFrame(anim); return; }
+    wheelRot = target % 360;
+    const seg = SEGS[idx];
+    const res = document.getElementById('wRes');
+    if(seg.m > 0){
+      const w = bet*seg.m;
+      setBal(S.bal + w);
+      res.textContent = seg.m+'x — +'+fmt(w)+' Р';
+      res.style.color = seg.m>=5 ? '#ffc93c' : 'var(--green)';
+      toast('🎡 Выпало '+seg.m+'x! +'+fmt(w)+' Р','gold');
+    } else {
+      res.textContent = '✖ Пусто';
+      res.style.color = 'var(--red)';
+      toast('🎡 Пусто. -'+fmt(bet)+' Р','bad');
+    }
+    setTimeout(()=>{ wheelBusy=false; document.getElementById('wheelBtn').disabled=false; }, 800);
+  }
+  requestAnimationFrame(anim);
+}
+
+/* ПЛИНКО */
+const PL_ROWS = 10;
+const PL_MULT = [32,16,8,4,2,0,2,4,8,16,32];
+const plCv = document.getElementById('plinkoCv');
+const plCtx = plCv.getContext('2d');
+let plW=0, plH=0, plSpacing=0, plPadT=0, plPadB=0, plRowH=0;
+let plPegs=[];
+const PL = { busy:false, trail:[], raf:0 };
+
+function plColor(m){
+  if(m===0) return '#3a1e2a';
+  if(m===2) return '#1f6b4a';
+  if(m===4) return '#2e8b57';
+  if(m===8) return '#d4a017';
+  if(m===16) return '#ff8a00';
+  return '#ff2d78';
+}
+function plinkoGeometry(){
+  if(!plCv) return false;
+  const wrap = plCv.parentElement;
+  const rect = plCv.getBoundingClientRect();
+  let w = rect.width || wrap.clientWidth;
+  let h = rect.height || wrap.clientHeight;
+  if(!w || !h || !isFinite(w) || !isFinite(h)) return false;
+  const dpr = Math.min(window.devicePixelRatio||1, 2);
+  plCv.width = Math.round(w*dpr);
+  plCv.height = Math.round(h*dpr);
+  plW = w; plH = h;
+  plCtx.setTransform(dpr,0,0,dpr,0,0);
+  const padX = 16;
+  plSpacing = (plW - padX*2)/(PL_ROWS+1);
+  plPadT = 26;
+  plPadB = 56;
+  plRowH = (plH - plPadT - plPadB)/PL_ROWS;
+  plPegs = [];
+  for(let r=0;r<PL_ROWS;r++){
+    for(let c=0;c<=r;c++){
+      plPegs.push({ x: plW/2 + (c - r/2)*plSpacing, y: plPadT + r*plRowH });
+    }
+  }
+  plinkoDraw();
+  return true;
+}
+function plinkoDraw(ball){
+  if(!plW || !plH) return;
+  const ctx = plCtx;
+  ctx.clearRect(0,0,plW,plH);
+  const bg = ctx.createRadialGradient(plW/2, plH*0.05, 10, plW/2, plH*0.05, plH*0.9);
+  bg.addColorStop(0,'rgba(0,230,118,.15)');
+  bg.addColorStop(1,'rgba(0,230,118,0)');
+  ctx.fillStyle = bg; ctx.fillRect(0,0,plW,plH);
+  plPegs.forEach(p=>{
+    ctx.beginPath(); ctx.arc(p.x, p.y, 2.6, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(255,255,255,.78)';
+    ctx.shadowColor = '#7c4dff'; ctx.shadowBlur = 8;
+    ctx.fill(); ctx.shadowBlur = 0;
+  });
+  const slotW = plSpacing*0.92;
+  const slotY = plPadT + PL_ROWS*plRowH + 12;
+  const slotH = 34;
+  for(let j=0;j<=PL_ROWS;j++){
+    const m = PL_MULT[j];
+    const x = plW/2 + (j - PL_ROWS/2)*plSpacing;
+    const l = x - slotW/2, t = slotY, w = slotW, h = slotH, rr = 9;
+    ctx.beginPath();
+    ctx.moveTo(l+rr, t); ctx.lineTo(l+w-rr, t);
+    ctx.quadraticCurveTo(l+w, t, l+w, t+rr);
+    ctx.lineTo(l+w, t+h-rr); ctx.quadraticCurveTo(l+w, t+h, l+w-rr, t+h);
+    ctx.lineTo(l+rr, t+h); ctx.quadraticCurveTo(l, t+h, l, t+h-rr);
+    ctx.lineTo(l, t+rr); ctx.quadraticCurveTo(l, t, l+rr, t);
+    ctx.closePath();
+    ctx.fillStyle = plColor(m); ctx.fill();
+    ctx.strokeStyle = 'rgba(255,255,255,.14)'; ctx.lineWidth = 1; ctx.stroke();
+    ctx.fillStyle = m===0 ? '#8a7aa8' : '#fff';
+    ctx.font = '900 '+Math.round(Math.min(14, plSpacing*0.42))+'px -apple-system,Arial,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(m===0?'0x':m+'x', x, t+h/2+1);
+  }
+  if(ball){
+    PL.trail.forEach((t,i)=>{
+      const a = (i+1)/PL.trail.length;
+      ctx.beginPath(); ctx.arc(t.x, t.y, 3.2*a+1, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(255,201,60,'+(0.35*a)+')'; ctx.fill();
+    });
+    ctx.beginPath(); ctx.arc(ball.x, ball.y, 7, 0, Math.PI*2);
+    const g = ctx.createRadialGradient(ball.x-2, ball.y-2, 1, ball.x, ball.y, 8);
+    g.addColorStop(0,'#fff6c9'); g.addColorStop(0.5,'#ffc93c'); g.addColorStop(1,'#ff8a00');
+    ctx.fillStyle = g;
+    ctx.shadowColor = '#ffc93c'; ctx.shadowBlur = 16;
+    ctx.fill(); ctx.shadowBlur = 0;
+  }
+}
+function plinkoDrop(){
+  if(PL.busy) return;
+  if(!plW || !plH || !plinkoGeometry()){
+    toast('Доска ещё грузится, попробуй ещё раз','bad'); return;
+  }
+  const bet = readBet('plinkoBet'); if(!bet) return;
+  setBal(S.bal - bet); PL.busy = true; PL.trail = [];
+  document.getElementById('plinkoBtn').disabled = true;
+  let j = 0;
+  const pts = [{ x: plW/2, y: plPadT - 18 }];
+  for(let s=1;s<=PL_ROWS;s++){
+    j += Math.random()<0.5 ? 0 : 1;
+    pts.push({ x: plW/2 + (j - s/2)*plSpacing, y: plPadT + (s-1)*plRowH });
+  }
+  const slot = j;
+  pts.push({ x: plW/2 + (j - PL_ROWS/2)*plSpacing, y: plPadT + PL_ROWS*plRowH + 10 });
+
+  const startTime = performance.now();
+  const segDur = 250; 
+  const total = segDur*(pts.length-1);
+
+  function anim(){
+    const now = performance.now();
+    const p = Math.min(1, (now - startTime)/total);
+    const fp = p*(pts.length-1);
+    const i = Math.min(pts.length-2, Math.max(0, Math.floor(fp)));
+    const f = Math.max(0, Math.min(1, fp - i));
+    const a = pts[i], b = pts[i+1];
+    const e = f*f*(3-2*f);
+    const x = a.x + (b.x-a.x)*e;
+    const y = a.y + (b.y-a.y)*e;
+
+    PL.trail.push({x,y});
+    if(PL.trail.length>14) PL.trail.shift();
+    plinkoDraw({x,y});
+
+    if(p<1){ PL.raf = requestAnimationFrame(anim); return; }
+
+    PL.busy = false;
+    document.getElementById('plinkoBtn').disabled = false;
+    const mult = PL_MULT[slot];
+    if(mult>0){
+      const win = Math.round(bet*mult);
+      setBal(S.bal + win);
+      toast('+'+fmt(win)+' Р ('+mult+'x)','gold');
+    } else {
+      toast('0x — не повезло 💀','bad');
+    }
+    PL.trail = [];
+    plinkoDraw();
+  }
+  PL.raf = requestAnimationFrame(anim);
+}
+
+/* ЗАПУСК */
+diceRender();
+upRender();
+rocketResize();
+
+window.addEventListener('resize', ()=>{
+  rocketResize();
+  plinkoGeometry();
+});
+setTimeout(()=>{ rocketResize(); plinkoGeometry(); }, 120);
+
+updateOnlineCounters();
+setInterval(updateOnlineCounters, 3000);
+</script>
+</body>
+</html>
