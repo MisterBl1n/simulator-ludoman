@@ -177,7 +177,7 @@
 
 <div id="app">
   <header>
-    <div class="logo" onclick="tab('menu', document.querySelector('nav button[data-g=\'menu\']'))">СИМУЛЯТОР<br>ЛУДАМАНИИ<small>ТОЛЬКО ФАН</small></div>
+    <div class="logo" onclick="tab('menu', document.querySelector('nav button[data-g=\'menu\']'))">СИМУЛЯТОР<br>ЛУДОМАНИИ<small>ТОЛЬКО ФАН</small></div>
     <div class="head-right">
       <div class="balance-wrap">
         <div class="balance" id="balance">...</div>
@@ -373,7 +373,6 @@ function addFunds(){
   }
 }
 
-// АДМИНКА
 function adminAction(action) {
   const target = document.getElementById('adminTarget').value.trim();
   const amount = document.getElementById('adminAmount').value;
@@ -538,7 +537,7 @@ socket.on('cashout_success', (data) => { toast('💰 Забрал ' + fmt(data.w
 socket.on('toast', (data) => toast(data.msg, data.type));
 
 
-// МИНЫ, АПГРЕЙД, КОСТИ, КОЛЕСО, ПЛИНКО (Локалка)
+// МИНЫ
 let M = { mineCount:3, active:false }; const GRID_N = 25;
 function minePick(m,btn){ if(M.active) return; M.mineCount = m; document.querySelectorAll('#mineSeg button').forEach(b=>b.classList.remove('sel')); btn.classList.add('sel'); }
 function minesMult(k,m){ let p=1; for(let i=0;i<k;i++) p *= (GRID_N-i)/(GRID_N-m-i); return p*0.97; }
@@ -558,6 +557,7 @@ function mineClick(i){
 }
 function minesCash(){ if(!M.active) return; const win = M.bet*minesMult(M.opened.size, M.mineCount); M.active=false; setBal(S.bal + win); document.getElementById('minesCash').style.display='none'; document.getElementById('minesBtn').style.display='block'; toast('💰 Забрал '+fmt(win)+' Р','gold'); }
 
+// АПГРЕЙД
 let upBusy = false, upAngle = 0;
 function upRender(){ const b = Math.max(1, parseFloat(document.getElementById('upBet').value)); const w = Math.max(b+1, parseFloat(document.getElementById('upWin').value)); const c = Math.min(0.97, 0.97/(w/b)); document.getElementById('upCircle').style.background = `conic-gradient(var(--green) 0deg, #16924f ${c*360}deg, #2a1a3e ${c*360}deg, #221334 360deg)`; document.getElementById('upPct').textContent = (c*100).toFixed(1)+'%'; }
 document.getElementById('upBet').addEventListener('input', upRender); document.getElementById('upWin').addEventListener('input', upRender); upRender();
@@ -574,6 +574,7 @@ function upStart(){
   } requestAnimationFrame(anim);
 }
 
+// КОСТИ
 let D = { mode:'over', busy:false };
 function diceMode(m){ D.mode=m; document.getElementById('dOver').classList.toggle('sel', m==='over'); document.getElementById('dUnder').classList.toggle('sel', m==='under'); }
 function diceRoll(){
@@ -583,6 +584,7 @@ function diceRoll(){
   setTimeout(()=>{ if(D.mode==='over' ? r>t : r<t){ setBal(S.bal + b*(95/c)); toast('Победа!','good'); } else toast('Проигрыш','bad'); D.busy=false; }, 1000);
 }
 
+// КОЛЕСО
 const SEGS = [0,1.5,0,3,1.5,5,0,2,10,1.5]; let wheelRot = 0, wheelBusy = false;
 function drawWheel(){
   const ctx = document.getElementById('wheelCv').getContext('2d'); ctx.clearRect(0,0,540,540); ctx.save(); ctx.translate(270,270); ctx.rotate(wheelRot*Math.PI/180);
@@ -599,9 +601,43 @@ function wheelSpin(){
   } requestAnimationFrame(anim);
 }
 
-const PL_ROWS = 10; const PL_MULT = [32,16,8,4,2,0,2,4,8,16,32]; let plW=0, plH=0;
-function plinkoGeometry(){ const cv = document.getElementById('plinkoCv'); if(!cv) return; const r = cv.getBoundingClientRect(); if(!r.width) return; cv.width=r.width; cv.height=r.height; plW=r.width; plH=r.height; }
-function plinkoDrop(){ toast('Игра в разработке (визуал)', 'bad'); }
+// ПЛИНКО
+const PL_ROWS = 10; const PL_MULT = [32,16,8,4,2,0,2,4,8,16,32]; let plW=0, plH=0, plSpacing=0, plPadT=0, plRowH=0;
+function plinkoGeometry(){
+  const cv = document.getElementById('plinkoCv'); if(!cv) return; const wrap = cv.parentElement; const r = cv.getBoundingClientRect();
+  let w = r.width || wrap.clientWidth; let h = r.height || wrap.clientHeight;
+  if(!w || !h) return; cv.width=w; cv.height=h; plW=w; plH=h;
+  const padX = 16; plSpacing = (plW - padX*2)/(PL_ROWS+1); plPadT = 26; plRowH = (plH - plPadT - 56)/PL_ROWS;
+  plinkoDraw();
+}
+function plinkoDraw(){
+  if(!plW || !plH) return; const ctx = document.getElementById('plinkoCv').getContext('2d'); ctx.clearRect(0,0,plW,plH);
+  for(let r=0;r<PL_ROWS;r++) for(let c=0;c<=r;c++){ const x=plW/2+(c-r/2)*plSpacing; const y=plPadT+r*plRowH; ctx.beginPath(); ctx.arc(x,y,2.5,0,Math.PI*2); ctx.fillStyle='#fff'; ctx.fill(); }
+  const slotW = plSpacing*0.92; const slotY = plPadT + PL_ROWS*plRowH + 12;
+  for(let j=0;j<=PL_ROWS;j++){
+    const m = PL_MULT[j]; const x = plW/2 + (j - PL_ROWS/2)*plSpacing; const l = x - slotW/2;
+    ctx.fillStyle = m===0?'#3a1e2a':'#1f6b4a'; ctx.beginPath(); ctx.roundRect(l, slotY, slotW, 34, 9); ctx.fill();
+    ctx.fillStyle = '#fff'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(m+'x', x, slotY+17);
+  }
+}
+function plinkoDrop(){
+  const b = readBet('plinkoBet'); if(!b) return; setBal(S.bal - b);
+  let j = 0; const pts = [{x: plW/2, y: plPadT - 18}];
+  for(let s=1;s<=PL_ROWS;s++){ j += Math.random()<0.5?0:1; pts.push({x: plW/2+(j-s/2)*plSpacing, y: plPadT+(s-1)*plRowH}); }
+  const slot = j; pts.push({x: plW/2+(j-PL_ROWS/2)*plSpacing, y: plPadT+PL_ROWS*plRowH+10});
+  const t0 = performance.now(), dur = 2000;
+  function anim(now){
+    const p = Math.min(1,(now-t0)/dur); const fp = p*(pts.length-1); const i = Math.min(pts.length-2, Math.floor(fp)); const f = fp-i;
+    const x = pts[i].x + (pts[i+1].x-pts[i].x)*f; const y = pts[i].y + (pts[i+1].y-pts[i].y)*f;
+    plinkoDraw(); const ctx = document.getElementById('plinkoCv').getContext('2d');
+    ctx.beginPath(); ctx.arc(x,y,6,0,Math.PI*2); ctx.fillStyle='#ffc93c'; ctx.shadowBlur=15; ctx.shadowColor='#ffc93c'; ctx.fill(); ctx.shadowBlur=0;
+    if(p<1) return requestAnimationFrame(anim);
+    const mult = PL_MULT[slot]; if(mult>0){ setBal(S.bal + b*mult); toast('+'+fmt(b*mult)+' Р ('+mult+'x)','gold'); } else toast('0x','bad'); plinkoDraw();
+  } requestAnimationFrame(anim);
+}
+
+window.addEventListener('resize', ()=>{ rocketResize(); plinkoGeometry(); });
+setTimeout(()=>{ rocketResize(); plinkoGeometry(); }, 200);
 </script>
 </body>
 </html>
