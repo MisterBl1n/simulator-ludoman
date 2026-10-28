@@ -5,14 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Админ-Панель</title>
 <style>
-  body { font-family: sans-serif; background: #0b0e1a; color: #fff; padding: 20px; }
+  body { font-family: sans-serif; background: #0b0e1a; color: #fff; padding: 20px; margin: 0; }
   .card { background: #1a1e2e; padding: 20px; border-radius: 12px; max-width: 600px; margin: 0 auto; }
   input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; }
   input { background: #2a2e3e; color: #fff; }
   button { background: #00e676; color: #000; font-weight: bold; cursor: pointer; }
   button:hover { background: #00c853; }
-  .list { margin-top: 20px; background: #111; padding: 10px; border-radius: 8px; font-family: monospace; }
+  .list { margin-top: 20px; background: #111; padding: 10px; border-radius: 8px; font-family: monospace; max-height: 300px; overflow-y: auto; }
   .log { color: #00e676; margin-top: 10px; font-size: 14px; }
+  .player-item { padding: 8px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+  .status-on { color: #00e676; font-size: 12px; }
+  .status-off { color: #ff5252; font-size: 12px; }
 </style>
 </head>
 <body>
@@ -22,7 +25,7 @@
   <label>Секретный ключ:</label>
   <input type="password" id="secret" placeholder="admin123" value="admin123">
   
-  <label>Ник Игрока:</label>
+  <label>Ник Игрока (скопируй из списка):</label>
   <input type="text" id="playerName" placeholder="Игрок_123">
   
   <label>Сумма (Р):</label>
@@ -35,12 +38,12 @@
   
   <button onclick="loadPlayers()" style="background:#7c4dff; color:white; margin-top:20px;">🔄 Обновить список игроков</button>
   
-  <div class="list" id="playersList">Список пуст...</div>
+  <div class="list" id="playersList">Нажми "Обновить", чтобы загрузить...</div>
   <div class="log" id="log"></div>
 </div>
 
 <script>
-const API_URL = 'https://simulator-ludoman.layero.app'; // Ссылка на твой сервер
+const API_URL = ''; // Пустая строка, так как админка на том же сервере
 
 async function changeBalance(action) {
   const secret = document.getElementById('secret').value;
@@ -73,9 +76,17 @@ async function loadPlayers() {
     const data = await res.json();
     
     if (Array.isArray(data)) {
-      let html = '<b>Игроки в сети:</b><br>';
+      let html = '';
+      if(data.length === 0) html = 'Пока никого нет...';
       data.forEach(p => {
-        html += `👤 ${p.name} — <b>${p.balance} Р</b><br>`;
+        const status = p.online ? '<span class="status-on">● В сети</span>' : '<span class="status-off">○ Оффлайн</span>';
+        html += `<div class="player-item">
+          <div>
+            <b>${p.name}</b><br>
+            <span style="color:#ffc93c">${p.balance} Р</span>
+          </div>
+          <div>${status}</div>
+        </div>`;
       });
       document.getElementById('playersList').innerHTML = html;
     } else {
