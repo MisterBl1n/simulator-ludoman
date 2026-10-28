@@ -330,7 +330,7 @@
 <script>
 'use strict';
 
-const socket = io({ transports: ['websocket'] });
+const socket = io();
 const S = { bal: 0, isAdmin: false, authMode: 'login' };
 const fmt = n => n.toLocaleString('ru-RU',{maximumFractionDigits:2});
 
