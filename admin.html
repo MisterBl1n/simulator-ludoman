@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ-Панель</title>
+<style>
+  body { font-family: sans-serif; background: #0b0e1a; color: #fff; padding: 20px; }
+  .card { background: #1a1e2e; padding: 20px; border-radius: 12px; max-width: 600px; margin: 0 auto; }
+  input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; }
+  input { background: #2a2e3e; color: #fff; }
+  button { background: #00e676; color: #000; font-weight: bold; cursor: pointer; }
+  button:hover { background: #00c853; }
+  .list { margin-top: 20px; background: #111; padding: 10px; border-radius: 8px; font-family: monospace; }
+  .log { color: #00e676; margin-top: 10px; font-size: 14px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <h2>👑 Админ-Панель</h2>
+  
+  <label>Секретный ключ:</label>
+  <input type="password" id="secret" placeholder="admin123" value="admin123">
+  
+  <label>Ник Игрока:</label>
+  <input type="text" id="playerName" placeholder="Игрок_123">
+  
+  <label>Сумма (Р):</label>
+  <input type="number" id="amount" value="1000">
+  
+  <div style="display:flex; gap:10px;">
+    <button onclick="changeBalance('add')">➕ Начислить</button>
+    <button onclick="changeBalance('set')" style="background:#ffc93c">✏️ Установить</button>
+  </div>
+  
+  <button onclick="loadPlayers()" style="background:#7c4dff; color:white; margin-top:20px;">🔄 Обновить список игроков</button>
+  
+  <div class="list" id="playersList">Список пуст...</div>
+  <div class="log" id="log"></div>
+</div>
+
+<script>
+const API_URL = 'https://simulator-ludoman.layero.app'; // Ссылка на твой сервер
+
+async function changeBalance(action) {
+  const secret = document.getElementById('secret').value;
+  const playerName = document.getElementById('playerName').value;
+  const amount = document.getElementById('amount').value;
+  
+  try {
+    const res = await fetch(API_URL + '/api/admin/balance', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret, playerName, amount, action })
+    });
+    const data = await res.json();
+    
+    if (data.error) {
+      document.getElementById('log').innerHTML = '❌ ' + data.error;
+    } else {
+      document.getElementById('log').innerHTML = '✅ Баланс обновлен. Новый баланс: ' + data.newBalance;
+      loadPlayers();
+    }
+  } catch (e) {
+    document.getElementById('log').innerHTML = '❌ Ошибка сети (сервер спит или выключен)';
+  }
+}
+
+async function loadPlayers() {
+  const secret = document.getElementById('secret').value;
+  try {
+    const res = await fetch(API_URL + '/api/admin/players?secret=' + secret);
+    const data = await res.json();
+    
+    if (Array.isArray(data)) {
+      let html = '<b>Игроки в сети:</b><br>';
+      data.forEach(p => {
+        html += `👤 ${p.name} — <b>${p.balance} Р</b><br>`;
+      });
+      document.getElementById('playersList').innerHTML = html;
+    } else {
+      document.getElementById('playersList').innerHTML = '❌ ' + data.error;
+    }
+  } catch (e) {
+    document.getElementById('playersList').innerHTML = '❌ Ошибка сети';
+  }
+}
+</script>
+</body>
+</html>
