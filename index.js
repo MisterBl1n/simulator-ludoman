@@ -11,55 +11,51 @@ const io = new Server(httpServer, {
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+app.use(express.static('public')); // Отдаем файлы сайта
 
-// Эндпоинт для проверки работоспособности (чтобы сервер не засыпал)
 app.get('/health', (req, res) => res.status(200).send('OK'));
 
-// --- БАЗА ДАННЫХ В ПАМЯТИ ---
-const players = {}; // { socketId: { name, balance, bet, cashedOut, pendingBet } }
-const ADMIN_SECRET = 'admin123'; // Секретный ключ для админки
+// --- БАЗА ДАННЫХ ---
+const users = {}; // { username: { balance, socketId, pendingBet, bet, cashedOut, cashoutMult } }
+const ADMIN_SECRET = 'admin123'; 
 
-// --- ЛОГИКА ИГРЫ РАКЕТКА ---
+// --- ЛОГИКА ИГРЫ ---
 let gameState = {
-  phase: 'waiting', // waiting, flying, crashed
-  multiplier: 1.00,
-  crashAt: 2.00,
-  timeLeft: 8,
-  players: []
+  phase: 'waiting', multiplier: 1.00, crashAt: 2.00, timeLeft: 8
 };
+let activeBets = []; // [{ username, bet, cashedOut, cashoutMult }]
 
 function startGameLoop() {
-  // Фаза ожидания ставок
   gameState.phase = 'waiting';
   gameState.timeLeft = 8;
   gameState.multiplier = 1.00;
-  gameState.players = [];
+  activeBets = [];
   
-  // Переносим отложенные ставки в текущий раунд
-  for (const id in players) {
-    if (players[id].pendingBet > 0) {
-      if (players[id].balance >= players[id].pendingBet) {
-        players[id].balance -= players[id].pendingBet;
-        players[id].bet = players[id].pendingBet;
-        players[id].cashedOut = false;
-        players[id].pendingBet = 0;
-        io.to(id).emit('balance_update', players[id].balance);
-        io.to(id).emit('toast', { msg: 'Ставка принята: ' + players[id].bet + ' Р', type: 'good' });
+  // Переносим отложенные ставки
+  for (const name in users) {
+    if (users[name].pendingBet > 0) {
+      if (users[name].balance >= users[name].pendingBet) {
+        users[name].balance -= users[name].pendingBet;
+        users[name].bet = users[name].pendingBet;
+        users[name].cashedOut = false;
+        users[name].pendingBet = 0;
+        if (users[name].socketId) {
+          io.to(users[name].socketId).emit('balance_update', users[name].balance);
+          io.to(users[name].socketId).emit('toast', { msg: 'Ставка принята: ' + users[name].bet + ' Р', type: 'good' });
+        }
       } else {
-        players[id].pendingBet = 0;
-        io.to(id).emit('toast', { msg: 'Не хватило рублей на отложенную ставку', type: 'bad' });
+        users[name].pendingBet = 0;
+        if (users[name].socketId) io.to(users[name].socketId).emit('toast', { msg: 'Не хватило на отложенную ставку', type: 'bad' });
       }
     } else {
-      players[id].bet = 0;
-      players[id].cashedOut = false;
+      users[name].bet = 0;
+      users[name].cashedOut = false;
     }
   }
 
   updatePlayersList();
   io.emit('game_state', gameState);
 
-  // Таймер ожидания
   const waitInterval = setInterval(() => {
     gameState.timeLeft -= 1;
     io.emit('game_state', gameState);
@@ -73,7 +69,6 @@ function startGameLoop() {
 function startFlyingPhase() {
   gameState.phase = 'flying';
   gameState.multiplier = 1.00;
-  // Генерация краша (математика как в оригинале)
   gameState.crashAt = Math.min(1000, Math.max(1.01, 0.97 / (1 - Math.random())));
   io.emit('game_state', gameState);
 
@@ -91,57 +86,56 @@ function startFlyingPhase() {
       gameState.multiplier = mult;
       io.emit('multiplier_update', mult);
     }
-  }, 50); // 20 обновлений в секунду
+  }, 50);
 }
 
 function crashGame() {
   gameState.phase = 'crashed';
   io.emit('game_crash', { crashAt: gameState.crashAt });
   
-  // Сбрасываем тех, кто не успел забрать
-  for (const id in players) {
-    if (players[id].bet > 0 && !players[id].cashedOut) {
-      players[id].bet = 0;
+  for (const name in users) {
+    if (users[name].bet > 0 && !users[name].cashedOut) {
+      users[name].bet = 0;
     }
   }
   updatePlayersList();
-  
-  setTimeout(startGameLoop, 3000); // Пауза 3 секунды перед новым раундом
+  setTimeout(startGameLoop, 3000);
 }
 
 function updatePlayersList() {
-  const activePlayers = [];
+  activeBets = [];
   let totalBank = 0;
-  for (const id in players) {
-    if (players[id].bet > 0) {
-      activePlayers.push({
-        name: players[id].name,
-        bet: players[id].bet,
-        cashedOut: players[id].cashedOut,
-        cashoutMult: players[id].cashoutMult || 0
+  for (const name in users) {
+    if (users[name].bet > 0) {
+      activeBets.push({
+        name: name, bet: users[name].bet, cashedOut: users[name].cashedOut, cashoutMult: users[name].cashoutMult || 0
       });
-      totalBank += players[id].bet;
+      totalBank += users[name].bet;
     }
   }
-  io.emit('players_update', { players: activePlayers, totalBank });
+  io.emit('players_update', { players: activeBets, totalBank });
 }
 
 // --- СОКЕТЫ ---
 io.on('connection', (socket) => {
-  // При подключении даем игроку стартовый баланс
-  players[socket.id] = {
-    name: 'Игрок_' + Math.floor(Math.random() * 1000),
-    balance: 1000,
-    bet: 0,
-    pendingBet: 0,
-    cashedOut: false
-  };
+  socket.on('login', (username) => {
+    username = username.trim().substring(0, 15);
+    if (!username) return;
 
-  socket.emit('init', { balance: players[socket.id].balance, state: gameState });
+    if (!users[username]) {
+      users[username] = { balance: 1000, bet: 0, pendingBet: 0, cashedOut: false, cashoutMult: 0 };
+    }
+    users[username].socketId = socket.id;
+    socket.username = username;
+
+    socket.emit('login_success', { username, balance: users[username].balance, state: gameState });
+    updatePlayersList();
+  });
 
   socket.on('place_bet', (amount) => {
-    const p = players[socket.id];
-    if (!p) return;
+    const name = socket.username;
+    if (!name || !users[name]) return;
+    const p = users[name];
     amount = parseFloat(amount);
 
     if (gameState.phase === 'waiting' && p.bet === 0) {
@@ -152,23 +146,21 @@ io.on('connection', (socket) => {
         socket.emit('balance_update', p.balance);
         socket.emit('toast', { msg: 'Ставка принята: ' + amount + ' Р', type: 'good' });
         updatePlayersList();
-      } else {
-        socket.emit('toast', { msg: 'Недостаточно средств', type: 'bad' });
-      }
+      } else socket.emit('toast', { msg: 'Недостаточно средств', type: 'bad' });
     } else if (p.bet === 0) {
-      // Ставка на следующий раунд
       if (p.balance >= amount) {
         p.pendingBet = amount;
         socket.emit('toast', { msg: 'Забронировано на след. раунд: ' + amount + ' Р', type: 'good' });
-      } else {
-        socket.emit('toast', { msg: 'Недостаточно средств', type: 'bad' });
-      }
+      } else socket.emit('toast', { msg: 'Недостаточно средств', type: 'bad' });
     }
   });
 
   socket.on('cash_out', () => {
-    const p = players[socket.id];
-    if (p && p.bet > 0 && !p.cashedOut && gameState.phase === 'flying') {
+    const name = socket.username;
+    if (!name || !users[name]) return;
+    const p = users[name];
+    
+    if (p.bet > 0 && !p.cashedOut && gameState.phase === 'flying') {
       p.cashedOut = true;
       p.cashoutMult = gameState.multiplier;
       const win = Math.floor(p.bet * gameState.multiplier);
@@ -179,45 +171,42 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('set_name', (name) => {
-    if (players[socket.id]) players[socket.id].name = name.substring(0, 15);
-    updatePlayersList();
-  });
-
   socket.on('disconnect', () => {
-    delete players[socket.id];
+    if (socket.username && users[socket.username]) {
+      users[socket.username].socketId = null;
+    }
     updatePlayersList();
   });
 });
 
-// --- АДМИН ПАНЕЛЬ (API) ---
+// --- АДМИН API ---
 app.post('/api/admin/balance', (req, res) => {
   const { secret, playerName, amount, action } = req.body;
   if (secret !== ADMIN_SECRET) return res.status(403).json({ error: 'Неверный пароль' });
 
-  let targetId = null;
-  for (const id in players) {
-    if (players[id].name === playerName) { targetId = id; break; }
+  if (!users[playerName]) return res.status(404).json({ error: 'Игрок не найден' });
+
+  if (action === 'add') users[playerName].balance += parseFloat(amount);
+  if (action === 'set') users[playerName].balance = parseFloat(amount);
+
+  if (users[playerName].socketId) {
+    io.to(users[playerName].socketId).emit('balance_update', users[playerName].balance);
+    io.to(users[playerName].socketId).emit('toast', { msg: 'Администратор изменил ваш баланс!', type: 'gold' });
   }
-
-  if (!targetId) return res.status(404).json({ error: 'Игрок не найден' });
-
-  if (action === 'add') players[targetId].balance += parseFloat(amount);
-  if (action === 'set') players[targetId].balance = parseFloat(amount);
-
-  io.to(targetId).emit('balance_update', players[targetId].balance);
-  io.to(targetId).emit('toast', { msg: 'Администратор изменил ваш баланс!', type: 'gold' });
   
-  res.json({ success: true, newBalance: players[targetId].balance });
+  res.json({ success: true, newBalance: users[playerName].balance });
 });
 
 app.get('/api/admin/players', (req, res) => {
   if (req.query.secret !== ADMIN_SECRET) return res.status(403).json({ error: 'Неверный пароль' });
-  const list = Object.values(players).map(p => ({ name: p.name, balance: p.balance }));
+  const list = Object.keys(users).map(name => ({ 
+    name: name, 
+    balance: users[name].balance,
+    online: !!users[name].socketId
+  }));
   res.json(list);
 });
 
-// Запуск
 const PORT = process.env.PORT || 3000;
 httpServer.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Сервер запущен на порту ${PORT}`);
