@@ -103,7 +103,7 @@
   .chips button.max{background:linear-gradient(90deg,var(--gold),#ff9800); color:#2a1a00; border-color:transparent;}
   .bigbtn{width:100%; border:0; border-radius:14px; padding:15px; font-size:16px; font-weight:900; color:#fff; letter-spacing:.5px; cursor:pointer; transition:transform .08s, filter .2s; background:linear-gradient(90deg,var(--pink),var(--purple)); box-shadow:0 6px 20px rgba(255,45,120,.35);}
   .bigbtn:active{transform:scale(.96);}
-  .bigbtn:disabled{filter:grayscale(.8) brightness(.6);}
+  .bigbtn:disabled{filter:grayscale(.8) brightness(.6); cursor:not-allowed;}
   .bigbtn.green{background:linear-gradient(90deg,#00c853,#00e576); box-shadow:0 6px 20px rgba(0,200,83,.35);}
   .bigbtn.gold{background:linear-gradient(90deg,#ff9800,var(--gold)); box-shadow:0 6px 20px rgba(255,201,60,.35); color:#2a1a00;}
   .bigbtn.blue{background:linear-gradient(90deg,#536DFE,#7C4DFF); box-shadow:0 6px 20px rgba(83,109,254,.4); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; padding:10px;}
@@ -186,7 +186,7 @@
   .seg button{flex:1; padding:9px 0; border-radius:10px; border:1px solid var(--line); background:rgba(255,255,255,.06); color:#cde; font-weight:800; font-size:13px; cursor:pointer;}
   .seg button.sel{background:linear-gradient(90deg,var(--purple),var(--pink)); border-color:transparent; color:#fff;}
 
-  .row{display:flex; justify-content:space-between; font-size:13px; color:#9ab; margin-bottom:10px; flex-wrap:wrap; gap:4px;}
+  .row{display:flex; justify-content:space-between; font-size:13px; color:#9ab; margin-bottom:10px; flex-wrap:wrap; gap:6px;}
   .row b{color:#fff;}
   input[type=range]{width:100%; accent-color:var(--pink); height:34px;}
 
@@ -280,32 +280,32 @@
       <div class="menu-title">ВЫБЕРИ ИГРУ</div>
       <div class="menu-grid">
         <button class="menu-card" style="--c1:#7c1a47; --c2:#ff2d78;" onclick="tab('rocket', document.querySelector('nav button[data-g=\'rocket\']'))">
-          <div class="menu-live"><div class="dot"></div><span id="m-online-rocket">…</span></div>
+          <div class="menu-live"><div class="dot"></div><span id="m-online-rocket">—</span></div>
           <div class="icon">🚀</div>
           <div class="title">Ракетка</div>
         </button>
         <button class="menu-card" style="--c1:#1a0b2e; --c2:#ff6b00;" onclick="tab('mines', document.querySelector('nav button[data-g=\'mines\']'))">
-          <div class="menu-live"><div class="dot"></div><span id="m-online-mines">…</span></div>
+          <div class="menu-live"><div class="dot"></div><span id="m-online-mines">—</span></div>
           <div class="icon">💣</div>
           <div class="title">Мины</div>
         </button>
         <button class="menu-card" style="--c1:#8b6900; --c2:#ffc93c;" onclick="tab('up', document.querySelector('nav button[data-g=\'up\']'))">
-          <div class="menu-live"><div class="dot"></div><span id="m-online-up">…</span></div>
+          <div class="menu-live"><div class="dot"></div><span id="m-online-up">—</span></div>
           <div class="icon">⚡</div>
           <div class="title">Апгрейд</div>
         </button>
         <button class="menu-card" style="--c1:#0b4a52; --c2:#00e5ff;" onclick="tab('dice', document.querySelector('nav button[data-g=\'dice\']'))">
-          <div class="menu-live"><div class="dot"></div><span id="m-online-dice">…</span></div>
+          <div class="menu-live"><div class="dot"></div><span id="m-online-dice">—</span></div>
           <div class="icon">🎲</div>
           <div class="title">Кости</div>
         </button>
         <button class="menu-card" style="--c1:#5c0b11; --c2:#ff5252;" onclick="tab('wheel', document.querySelector('nav button[data-g=\'wheel\']'))">
-          <div class="menu-live"><div class="dot"></div><span id="m-online-wheel">…</span></div>
+          <div class="menu-live"><div class="dot"></div><span id="m-online-wheel">—</span></div>
           <div class="icon">🎡</div>
           <div class="title">Колесо</div>
         </button>
         <button class="menu-card" style="--c1:#0a3b1f; --c2:#00e676;" onclick="tab('plinko', document.querySelector('nav button[data-g=\'plinko\']'))">
-          <div class="menu-live"><div class="dot"></div><span id="m-online-plinko">…</span></div>
+          <div class="menu-live"><div class="dot"></div><span id="m-online-plinko">—</span></div>
           <div class="icon">🔻</div>
           <div class="title">Плинко</div>
         </button>
@@ -323,7 +323,6 @@
         <div class="resultline" id="cRes"></div>
       </div>
 
-      <!-- Ставка ВЫШЕ кнопки -->
       <div class="panel">
         <div class="round-bar">
           <div class="bet-timer" id="rocketTimer">⏱ СТАВКИ · <b>8с</b></div>
@@ -343,16 +342,14 @@
         </div>
       </div>
 
-      <!-- Кнопка -->
       <button class="bigbtn blue" id="rocketBtn" onclick="rocketClick()">
         <div style="font-size:16px; font-weight:900;">СДЕЛАТЬ СТАВКУ</div>
         <span id="rocketBtnSub">на следующий раунд</span>
       </button>
 
-      <!-- Игроки НИЖЕ кнопки -->
       <div class="panel" style="margin-top:12px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
-          <div class="live-badge"><div class="live-dot"></div><span id="online-rocket">0</span> онлайн</div>
+          <div class="live-badge"><div class="live-dot"></div><span id="online-rocket">—</span> онлайн</div>
         </div>
         <div class="players-header" id="pHeader">
           Игроков <b id="pCount">0</b> · банк <b id="pBank">0</b> Р
@@ -363,7 +360,7 @@
 
     <!-- МИНЫ -->
     <section class="game" id="g-mines">
-      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-mines">0</span> онлайн</div></div>
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-mines">—</span> онлайн</div></div>
       <div class="panel">
         <p class="ptitle">Количество мин</p>
         <div class="seg" id="mineSeg">
@@ -393,7 +390,7 @@
 
     <!-- АПГРЕЙДЕР -->
     <section class="game" id="g-up">
-      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-up">0</span> онлайн</div></div>
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-up">—</span> онлайн</div></div>
       <div class="panel">
         <div class="upg-fields">
           <div class="upg-field">
@@ -431,7 +428,7 @@
 
     <!-- КОСТИ -->
     <section class="game" id="g-dice">
-      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-dice">0</span> онлайн</div></div>
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-dice">—</span> онлайн</div></div>
       <div class="panel">
         <div class="dice-num" id="diceNum">50.00</div>
         <div class="seg">
@@ -458,7 +455,7 @@
 
     <!-- КОЛЕСО -->
     <section class="game" id="g-wheel">
-      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-wheel">0</span> онлайн</div></div>
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-wheel">—</span> онлайн</div></div>
       <div class="panel" style="text-align:center">
         <div class="wheelbox">
           <div class="pointer">▼</div>
@@ -483,12 +480,12 @@
 
     <!-- ПЛИНКО -->
     <section class="game" id="g-plinko">
-      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-plinko">0</span> онлайн</div></div>
+      <div style="margin-bottom:10px;"><div class="live-badge"><div class="live-dot"></div><span id="online-plinko">—</span> онлайн</div></div>
       <div class="plinko-wrap">
         <canvas id="plinkoCv"></canvas>
       </div>
       <div class="panel">
-        <p class="ptitle">Ставка · <span id="plBallsInFlight" style="color:var(--gold)">0</span> шариков в полёте</p>
+        <p class="ptitle">Ставка за шарик</p>
         <div class="betrow">
           <input type="number" id="plinkoBet" value="100" min="1" inputmode="decimal">
           <div class="chips">
@@ -500,7 +497,26 @@
             <button class="max" onclick="maxBet('plinkoBet')">MAX</button>
           </div>
         </div>
-        <button class="bigbtn green" id="plinkoBtn" onclick="plinkoDrop()">🔻 БРОСИТЬ ШАРИК</button>
+
+        <p class="ptitle" style="margin-top:12px;">Сколько шариков за запуск</p>
+        <div class="betrow">
+          <input type="number" id="plinkoCount" value="1" min="1" max="100" inputmode="numeric">
+          <div class="chips">
+            <button onclick="chip('plinkoCount',1)">1</button>
+            <button onclick="chip('plinkoCount',5)">5</button>
+            <button onclick="chip('plinkoCount',10)">10</button>
+            <button onclick="chip('plinkoCount',25)">25</button>
+            <button class="max" onclick="plinkoMaxCount()">MAX</button>
+          </div>
+        </div>
+
+        <div class="row">
+          <span>Стоимость: <b id="plinkoTotal">100 Р</b></span>
+          <span>Хватит на: <b id="plinkoAfford">10</b> шт.</span>
+          <span>В полёте: <b id="plBallsInFlight">0</b></span>
+        </div>
+
+        <button class="bigbtn green" id="plinkoBtn" onclick="plinkoDrop()">🔻 БРОСИТЬ</button>
       </div>
     </section>
   </main>
@@ -531,6 +547,8 @@ function setBal(v){
   el.textContent = fmt(S.bal);
   el.classList.add('pop');
   setTimeout(()=>el.classList.remove('pop'),200);
+  // Плинко: стоимость могла устареть после изменения баланса
+  if(typeof plinkoUpdateCost === 'function') plinkoUpdateCost();
 }
 function toast(msg,type){
   const t=document.getElementById('toast');
@@ -538,6 +556,27 @@ function toast(msg,type){
   clearTimeout(t._t); t._t=setTimeout(()=>t.className='',2400);
 }
 function addFunds(){ setBal(S.bal + 1000); toast('💳 Баланс пополнен на 1 000 Р', 'good'); }
+
+/* РЕАЛЬНЫЙ ОНЛАЙН
+   ---------------------------------------------------------------
+   Здесь ваша точка входа для настоящих данных онлайна.
+   Вызывайте setOnline('rocket', 47) когда сервер/WebSocket
+   пришлёт новое число играющих. Если данных нет — покажется «—».
+   --------------------------------------------------------------- */
+const ONLINE = { rocket:null, mines:null, up:null, dice:null, wheel:null, plinko:null };
+function setOnline(game, count){
+  if(!(game in ONLINE)) return;
+  ONLINE[game] = (typeof count === 'number' && count >= 0) ? count : null;
+  const mainEl = document.getElementById('online-'+game);
+  const menuEl = document.getElementById('m-online-'+game);
+  const c = ONLINE[game];
+  const txt = (c === null) ? '—' : c;
+  const txtMenu = (c === null) ? '—' : c + ' играют';
+  if(mainEl) mainEl.textContent = txt;
+  if(menuEl) menuEl.textContent = txtMenu;
+}
+// Пример-заглушка: как только подключите свой источник, удалите эти строки.
+// setOnline('rocket', 47);  // <-- сюда придёт значение из вашего auth/online-модуля
 
 /* НАВИГАЦИЯ */
 function tab(g,btn){
@@ -549,13 +588,28 @@ function tab(g,btn){
   if(g==='plinko'){
     requestAnimationFrame(()=>requestAnimationFrame(()=>plinkoGeometry()));
     setTimeout(plinkoGeometry, 60);
+    plinkoUpdateCost();
   }
-  updateOnlineCounters(); 
 }
-function chip(id,v){ document.getElementById(id).value=v; }
-function half(id){ const i=document.getElementById(id); i.value=Math.max(1,Math.floor((i.value||0)/2)); }
-function dbl(id){ const i=document.getElementById(id); i.value=Math.min(Math.max(S.bal,1),Math.round((i.value||0)*2*100)/100); }
-function maxBet(id){ const i=document.getElementById(id); i.value = Math.max(1, Math.floor(S.bal * 100) / 100); }
+function chip(id,v){
+  document.getElementById(id).value=v;
+  if(id==='plinkoBet'||id==='plinkoCount') plinkoUpdateCost();
+}
+function half(id){
+  const i=document.getElementById(id);
+  i.value=Math.max(1,Math.floor((i.value||0)/2));
+  if(id==='plinkoBet'||id==='plinkoCount') plinkoUpdateCost();
+}
+function dbl(id){
+  const i=document.getElementById(id);
+  i.value=Math.min(Math.max(S.bal,1),Math.round((i.value||0)*2*100)/100);
+  if(id==='plinkoBet'||id==='plinkoCount') plinkoUpdateCost();
+}
+function maxBet(id){
+  const i=document.getElementById(id);
+  i.value = Math.max(1, Math.floor(S.bal * 100) / 100);
+  if(id==='plinkoBet') plinkoUpdateCost();
+}
 function maxBetUp(){
   const betEl = document.getElementById('upBet');
   const winEl = document.getElementById('upWin');
@@ -570,31 +624,6 @@ function readBet(id){
   if(!v || v<=0){ toast('Ставка должна быть больше нуля','bad'); return 0; }
   if(v > S.bal){ toast('Недостаточно рублей 💸','bad'); return 0; }
   return Math.round(v*100)/100;
-}
-
-/* ОНЛАЙН */
-const onlineData = {
-  rocket: { base: 124, current: 124, el: 'online-rocket', mel: 'm-online-rocket' },
-  mines:  { base: 42, current: 42, el: 'online-mines', mel: 'm-online-mines' },
-  up:     { base: 88, current: 88, el: 'online-up', mel: 'm-online-up' },
-  dice:   { base: 215, current: 215, el: 'online-dice', mel: 'm-online-dice' },
-  wheel:  { base: 63, current: 63, el: 'online-wheel', mel: 'm-online-wheel' },
-  plinko: { base: 347, current: 347, el: 'online-plinko', mel: 'm-online-plinko' }
-};
-function updateOnlineCounters(){
-  for(let key in onlineData){
-    const d = onlineData[key];
-    const delta = Math.floor(Math.random() * 7) - 3;
-    d.current = Math.max(10, d.base + Math.floor(Math.random() * 20) - 10 + delta);
-    let displayVal = d.current;
-    if(key === 'rocket' && typeof RK !== 'undefined'){
-       displayVal = d.current + (RK.myBet > 0 ? 1 : 0);
-    }
-    const mainEl = document.getElementById(d.el);
-    const menuEl = document.getElementById(d.mel);
-    if(mainEl) mainEl.textContent = displayVal;
-    if(menuEl) menuEl.textContent = displayVal + ' играют';
-  }
 }
 
 /* РАКЕТКА */
@@ -1197,7 +1226,7 @@ function wheelSpin(){
 /* ПЛИНКО */
 const PL_ROWS = 10;
 const PL_MULT = [32,16,8,4,2,0,2,4,8,16,32];
-const MAX_BALLS = 20;
+const MAX_BALLS_ON_SCREEN = 100; // предел одновременных шариков (для производительности)
 const plCv = document.getElementById('plinkoCv');
 const plCtx = plCv.getContext('2d');
 let plW=0, plH=0, plSpacing=0, plPadT=0, plPadB=0, plRowH=0;
@@ -1248,7 +1277,6 @@ function plinkoDraw(){
   bg.addColorStop(1,'rgba(0,230,118,0)');
   ctx.fillStyle = bg; ctx.fillRect(0,0,plW,plH);
 
-  // pegs
   plPegs.forEach(p=>{
     ctx.beginPath(); ctx.arc(p.x, p.y, 2.6, 0, Math.PI*2);
     ctx.fillStyle = 'rgba(255,255,255,.78)';
@@ -1256,7 +1284,6 @@ function plinkoDraw(){
     ctx.fill(); ctx.shadowBlur = 0;
   });
 
-  // slots
   const slotW = plSpacing*0.92;
   const slotY = plPadT + PL_ROWS*plRowH + 12;
   const slotH = 34;
@@ -1279,7 +1306,6 @@ function plinkoDraw(){
     ctx.fillText(m===0?'0x':m+'x', x, t+h/2+1);
   }
 
-  // balls
   PL.balls.forEach(ball => {
     ctx.globalAlpha = ball.opacity;
     ball.trail.forEach((t,i)=>{
@@ -1302,37 +1328,91 @@ function plinkoUpdateCounter(){
   if(el) el.textContent = PL.balls.length;
 }
 
+function plinkoUpdateCost(){
+  const betEl = document.getElementById('plinkoBet');
+  const cntEl = document.getElementById('plinkoCount');
+  if(!betEl || !cntEl) return;
+  const bet = Math.max(1, Math.floor(parseFloat(betEl.value)||1));
+  let count = Math.max(1, Math.floor(parseFloat(cntEl.value)||1));
+  if(count > MAX_BALLS_ON_SCREEN) count = MAX_BALLS_ON_SCREEN;
+  const total = bet * count;
+  const afford = Math.floor(S.bal / bet);
+
+  const totalEl = document.getElementById('plinkoTotal');
+  const affordEl = document.getElementById('plinkoAfford');
+  const btn = document.getElementById('plinkoBtn');
+
+  if(totalEl){
+    totalEl.textContent = fmt(total) + ' Р';
+    totalEl.style.color = total > S.bal ? 'var(--red)' : '';
+  }
+  if(affordEl) affordEl.textContent = isFinite(afford) ? afford : 0;
+
+  if(btn){
+    if(total > S.bal){
+      btn.disabled = true;
+      btn.textContent = '🔻 НЕ ХВАТАЕТ ' + fmt(total - S.bal) + ' Р';
+    } else if(PL.balls.length + count > MAX_BALLS_ON_SCREEN){
+      btn.disabled = true;
+      btn.textContent = '🔻 СЛИШКОМ МНОГО В ПОЛЁТЕ';
+    } else {
+      btn.disabled = false;
+      btn.textContent = '🔻 БРОСИТЬ' + (count > 1 ? ' ×' + count : '');
+    }
+  }
+}
+
+function plinkoMaxCount(){
+  const bet = Math.max(1, Math.floor(parseFloat(document.getElementById('plinkoBet').value)||1));
+  const afford = Math.floor(S.bal / bet);
+  document.getElementById('plinkoCount').value = Math.max(1, Math.min(afford, MAX_BALLS_ON_SCREEN));
+  plinkoUpdateCost();
+}
+
 function plinkoDrop(){
-  if(PL.balls.length >= MAX_BALLS){ toast('Слишком много шариков в полёте','bad'); return; }
+  const betEl = document.getElementById('plinkoBet');
+  const cntEl = document.getElementById('plinkoCount');
+  if(!betEl || !cntEl) return;
+
+  const bet = Math.max(1, Math.floor(parseFloat(betEl.value)||1));
+  let count = Math.max(1, Math.floor(parseFloat(cntEl.value)||1));
+  if(count > MAX_BALLS_ON_SCREEN) count = MAX_BALLS_ON_SCREEN;
+
+  const total = bet * count;
+  if(bet <= 0){ toast('Ставка должна быть больше нуля','bad'); return; }
+  if(total > S.bal){ toast('Недостаточно рублей: нужно '+fmt(total)+' Р','bad'); return; }
+  if(PL.balls.length + count > MAX_BALLS_ON_SCREEN){
+    toast('Максимум '+MAX_BALLS_ON_SCREEN+' шариков одновременно','bad'); return;
+  }
+
   if(!plW || !plH || !plinkoGeometry()){
     toast('Доска ещё грузится, попробуй ещё раз','bad'); return;
   }
-  const bet = readBet('plinkoBet'); if(!bet) return;
-  setBal(S.bal - bet);
 
-  // Строим путь по дискретным шагам
-  let j = 0;
-  const pts = [{ x: plW/2, y: plPadT - 18 }];
-  for(let s=1;s<=PL_ROWS;s++){
-    j += Math.random()<0.5 ? 0 : 1;
-    pts.push({ x: plW/2 + (j - s/2)*plSpacing, y: plPadT + (s-1)*plRowH });
+  setBal(S.bal - total);
+
+  const now = performance.now();
+  for(let k=0;k<count;k++){
+    let j = 0;
+    const pts = [{ x: plW/2, y: plPadT - 18 }];
+    for(let s=1;s<=PL_ROWS;s++){
+      j += Math.random()<0.5 ? 0 : 1;
+      pts.push({ x: plW/2 + (j - s/2)*plSpacing, y: plPadT + (s-1)*plRowH });
+    }
+    pts.push({ x: plW/2 + (j - PL_ROWS/2)*plSpacing, y: plPadT + PL_ROWS*plRowH + 10 });
+
+    PL.balls.push({
+      pts, slot: j, bet, dur: 250 * (pts.length - 1),
+      start: now + k*40, // лёгкий каскад
+      x: pts[0].x, y: pts[0].y,
+      trail: [],
+      done: false, doneTime: 0, opacity: 1
+    });
   }
-  pts.push({ x: plW/2 + (j - PL_ROWS/2)*plSpacing, y: plPadT + PL_ROWS*plRowH + 10 });
-
-  const dur = 250 * (pts.length - 1);
-  PL.balls.push({
-    pts, slot: j, bet, dur,
-    start: performance.now(),
-    x: pts[0].x, y: pts[0].y,
-    trail: [],
-    done: false, doneTime: 0, opacity: 1
-  });
 
   plinkoUpdateCounter();
-
-  if(!PL.raf){
-    PL.raf = requestAnimationFrame(plinkoLoop);
-  }
+  plinkoUpdateCost();
+  if(!PL.raf) PL.raf = requestAnimationFrame(plinkoLoop);
 }
 
 function plinkoLoop(){
@@ -1343,7 +1423,9 @@ function plinkoLoop(){
       ball.opacity = Math.max(0, 1 - (now - ball.doneTime)/400);
       return;
     }
-    const p = Math.min(1, (now - ball.start) / ball.dur);
+    const p = Math.max(0, Math.min(1, (now - ball.start) / ball.dur));
+    if(p === 0) return; // ещё не стартовал
+
     const fp = p * (ball.pts.length - 1);
     const i = Math.min(ball.pts.length - 2, Math.max(0, Math.floor(fp)));
     const f = Math.max(0, Math.min(1, fp - i));
@@ -1358,23 +1440,20 @@ function plinkoLoop(){
     if(p >= 1){
       ball.done = true;
       ball.doneTime = now;
-      ball.x = ball.pts[ball.pts.length-1].x;
-      ball.y = ball.pts[ball.pts.length-1].y;
       const mult = PL_MULT[ball.slot];
-      const bet = ball.bet;
+      const b2 = ball.bet;
       if(mult > 0){
-        const win = Math.round(bet * mult);
+        const win = Math.round(b2 * mult);
         setBal(S.bal + win);
-        toast('+'+fmt(win)+' Р ('+mult+'x)','gold');
-      } else {
-        toast('0x — не повезло 💀','bad');
+        // Не спамим тостами при массовом запуске — только сводка ниже
       }
     }
   });
 
   // Удаляем исчезнувшие
+  const before = PL.balls.length;
   PL.balls = PL.balls.filter(b => !b.done || b.opacity > 0.01);
-  plinkoUpdateCounter();
+  if(PL.balls.length !== before) plinkoUpdateCounter();
 
   plinkoDraw();
 
@@ -1382,25 +1461,31 @@ function plinkoLoop(){
     PL.raf = requestAnimationFrame(plinkoLoop);
   } else {
     PL.raf = 0;
-    plinkoDraw();
+    plinkoUpdateCost();
   }
 }
+
+/* Слушатели для Плинко */
+document.getElementById('plinkoBet').addEventListener('input', plinkoUpdateCost);
+document.getElementById('plinkoCount').addEventListener('input', plinkoUpdateCost);
 
 /* ЗАПУСК */
 setBal(S.bal);
 diceRender();
 upRender();
 rocketResize();
+plinkoUpdateCost();
 
 window.addEventListener('resize', ()=>{
   rocketResize();
   plinkoGeometry();
 });
-setTimeout(()=>{ rocketResize(); plinkoGeometry(); }, 120);
+setTimeout(()=>{ rocketResize(); plinkoGeometry(); plinkoUpdateCost(); }, 120);
+
+// Все онлайн-счётчики по умолчанию "—". Ждём setOnline() из реального источника.
+['rocket','mines','up','dice','wheel','plinko'].forEach(g => setOnline(g, null));
 
 rocketStartBetting();
-updateOnlineCounters();
-setInterval(updateOnlineCounters, 3000);
 </script>
 </body>
 </html>
