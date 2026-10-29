@@ -70,7 +70,7 @@
   .online-badge::before { content:''; width:6px; height:6px; background:var(--green); border-radius:50%; box-shadow:0 0 6px var(--green); animation:pulse 2s infinite;}
   
   .players-header{font-size:13px; color:#9ab; font-weight:700; margin:15px 0 10px; padding:0 4px;}
-  .players-list{display:flex; flex-direction:column; gap:8px;}
+  .players-list{display:flex; flex-direction:column; gap:8px; max-height:200px; overflow-y:auto;}
   .player-row{ display:flex; align-items:center; gap:12px; background:rgba(255,255,255,.05); border:1px solid var(--line); border-radius:16px; padding:8px 14px; }
   .player-row.cashed{background:rgba(0,230,118,.1); border-color:rgba(0,230,118,.3);}
   .p-avatar{ width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:18px; color:#fff; flex-shrink:0; }
@@ -240,7 +240,6 @@
           <button onclick="dbl('rocketBet')">x2</button>
         </div>
         <button class="bigbtn blue" id="rocketBtn" onclick="rocketClick()" style="margin-top:12px;">СДЕЛАТЬ СТАВКУ</button>
-        <button class="bigbtn gray" id="rocketBtnNext" style="margin-top:8px; display:none;">на следующий раунд</button>
       </div>
     </div>
 
@@ -466,7 +465,6 @@ function toast(msg,type){
   clearTimeout(t._t); t._t=setTimeout(()=>t.className='',2400);
 }
 
-// === ВХОД ===
 let isRegister = false;
 function toggleAuthMode(e) {
   if(e) e.preventDefault();
@@ -494,7 +492,6 @@ socket.on('login_success', (data) => {
   S.username = data.username;
   toast('Привет, ' + data.username + '!', 'good');
   setTimeout(() => { rocketResize(); plinkoGeometry(); }, 100);
-  // Подключаемся к текущей игре (по умолчанию меню)
   socket.emit('join_game', { game: 'menu' });
 });
 
@@ -531,29 +528,23 @@ socket.on('admin_users_list', (list) => {
 socket.on('balance_update', (bal) => setBal(bal));
 socket.on('toast', (data) => toast(data.msg, data.type));
 
-// === ЖИВОЙ ОНЛАЙН С СЕРВЕРА ===
 socket.on('online_counts', (counts) => {
-  // counts = { rocket: 5, mines: 3, up: 8, ... }
   for(let game in counts) {
     const val = counts[game];
-    // Обновляем бейдж внутри игры
     const badge = document.getElementById('online-' + game);
     if(badge) badge.textContent = val;
-    // Обновляем счётчики в меню
     document.querySelectorAll(`.online-counter[data-game="${game}"]`).forEach(el => {
       el.textContent = val;
     });
   }
 });
 
-// === НАВИГАЦИЯ ===
 function tab(g,btn){
   document.querySelectorAll('.game').forEach(s=>s.classList.remove('on'));
   document.getElementById('g-'+g).classList.add('on');
   document.querySelectorAll('nav button').forEach(b=>b.classList.remove('on'));
   if(btn) btn.classList.add('on');
   
-  // Сообщаем серверу о смене игры для живого онлайна
   if(S.username) {
     socket.emit('join_game', { game: g });
   }
@@ -575,9 +566,6 @@ function readBet(id){
   return Math.round(v*100)/100;
 }
 
-/* ==========================================================================
-   РАКЕТКА (МУЛЬТИПЛЕЕР С СЕРВЕРА)
-   ========================================================================== */
 const rkCv = document.getElementById('rocketCanvas');
 const rkCtx = rkCv.getContext('2d');
 let rkW = 0, rkH = 0;
@@ -641,13 +629,10 @@ function renderPlayers(){
 
 function rocketUpdateUI(){
   const btn = document.getElementById('rocketBtn');
-  const btnNext = document.getElementById('rocketBtnNext');
   
-  // Сброс
+  // Сброс состояния кнопки
   btn.className = 'bigbtn';
   btn.disabled = false;
-  btn.style.display = 'block';
-  btnNext.style.display = 'none';
   
   if(RK.phase === 'waiting'){
     if(RK.myBet > 0){ 
@@ -663,29 +648,25 @@ function rocketUpdateUI(){
   
   if(RK.phase === 'flying'){
     if(RK.myBet > 0 && !RK.cashedOut){ 
-      // Главная кнопка — ЗАБРАТЬ
       const win = RK.myBet * RK.mult;
       btn.innerHTML = `💰 ЗАБРАТЬ ${RK.mult.toFixed(2)}x · ${fmt(win)} Р`; 
       btn.classList.add('green'); 
-      btnNext.style.display = 'none';
     } else if(RK.myBet > 0 && RK.cashedOut){ 
-      btn.innerHTML = `✓ ЗАБРАНО ${fmt(RK.myBet * (RK.playersData.find(p=>p.name===S.username)?.cashoutMult||1)).toFixed(2)}x`; 
+      btn.innerHTML = `✓ ЗАБРАНО`; 
       btn.classList.add('gray'); 
       btn.disabled = true; 
-      btnNext.style.display = 'none';
     } else { 
-      // Ставки нет — показываем серую "на следующий раунд"
-      btn.style.display = 'none';
-      btnNext.style.display = 'block';
-      btnNext.disabled = true;
+      btn.innerHTML = `ОЖИДАНИЕ СЛЕД. РАУНДА`; 
+      btn.classList.add('gray'); 
+      btn.disabled = true; 
     }
     return;
   }
   
   // crashed
-  btn.style.display = 'none';
-  btnNext.style.display = 'block';
-  btnNext.disabled = true;
+  btn.innerHTML = `ОЖИДАНИЕ СЛЕД. РАУНДА`; 
+  btn.classList.add('gray'); 
+  btn.disabled = true; 
 }
 
 function rocketClick(){
@@ -711,6 +692,8 @@ socket.on('game_state', (state) => {
     document.getElementById('cMult').textContent = '1.00x'; 
     document.getElementById('cSub').textContent = 'Ждём ставки…'; 
     RK.pts = []; 
+    RK.myBet = 0;
+    RK.cashedOut = false;
   } else if (RK.phase === 'flying') { 
     tEl.innerHTML = '🚀 В ПОЛЁТЕ'; 
     tEl.classList.add('fly'); 
@@ -755,7 +738,6 @@ socket.on('game_crash', (data) => {
 socket.on('players_update', (data) => { 
   RK.playersData = data.players; 
   renderPlayers(); 
-  // Обновляем мою ставку из списка
   const me = data.players.find(p => p.name === S.username);
   if(me) {
     RK.myBet = me.bet;
@@ -778,9 +760,6 @@ socket.on('cashout_success', (data) => {
   renderPlayers();
 });
 
-/* ==========================================================================
-   МИНЫ
-   ========================================================================== */
 let M = { mineCount:3, active:false };
 const GRID_N = 25;
 function minePick(m,btn){
@@ -841,9 +820,6 @@ function minesCash(){
   toast('💰 Забрал '+fmt(win)+' Р ('+mult.toFixed(2)+'x)','gold');
 }
 
-/* ==========================================================================
-   АПГРЕЙД
-   ========================================================================== */
 let upBusy = false, upAngle = 0;
 function upAdj(id, delta){
   const el = document.getElementById(id);
@@ -886,16 +862,14 @@ function upStart(){
   const needle = document.getElementById('upNeedle');
   circle.classList.remove('win','lose');
   
-  // Определяем результат СРАЗУ (честно по шансу)
   const roll = Math.random();
   const isWin = roll < chance;
   
-  // Целимся в нужную зону
   let targetAngle;
   if(isWin){
-    targetAngle = Math.random() * (chance * 360); // внутри зелёной зоны
+    targetAngle = Math.random() * (chance * 360);
   } else {
-    targetAngle = chance * 360 + Math.random() * ((1-chance) * 360); // в красной зоне
+    targetAngle = chance * 360 + Math.random() * ((1-chance) * 360);
   }
   
   const cur = ((upAngle%360)+360)%360;
@@ -922,9 +896,6 @@ function upStart(){
   }, 2650);
 }
 
-/* ==========================================================================
-   КОСТИ
-   ========================================================================== */
 let D = { mode:'over', busy:false };
 function diceMode(m){
   D.mode=m;
@@ -972,13 +943,10 @@ function diceRoll(){
   requestAnimationFrame(anim);
 }
 
-/* ==========================================================================
-   КОЛЕСО
-   ========================================================================== */
 const SEGS = [
   {m:0,  w:20, c:'#d32f2f'}, {m:1.5,w:15, c:'#7c4dff'}, {m:2,  w:10, c:'#00e5ff'},
   {m:0,  w:10, c:'#d32f2f'}, {m:3,  w:6,  c:'#00c853'}, {m:1.5,w:12, c:'#7c4dff'},
-  {m:5,  w:4,  c:'#ffc93c'}, {m:0,  w:8,  c:'#d32f2f'}, {m:2,  w:8,  c:'#00e5ff'},
+  {m:5,  w:4,  c:'#ffc93c'}, {m:0,  w:8, c:'#d32f2f'}, {m:2,  w:8,  c:'#00e5ff'},
   {m:10, w:2,  c:'#ff9800'}, {m:1.5,w:3,  c:'#7c4dff'}, {m:3,  w:2,  c:'#00c853'}
 ];
 const SEG_ANGLE = 360/SEGS.length;
@@ -1044,9 +1012,6 @@ function wheelSpin(){
   requestAnimationFrame(anim);
 }
 
-/* ==========================================================================
-   ПЛИНКО
-   ========================================================================== */
 const PL_ROWS = 10;
 const PL_MULT = [32,16,8,4,2,0,2,4,8,16,32];
 const plCv = document.getElementById('plinkoCv');
@@ -1192,7 +1157,6 @@ function plinkoDrop(){
   PL.raf = requestAnimationFrame(anim);
 }
 
-/* === ЗАПУСК === */
 diceRender();
 upRender();
 
